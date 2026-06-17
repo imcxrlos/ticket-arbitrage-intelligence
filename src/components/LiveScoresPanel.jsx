@@ -14,7 +14,7 @@ function parseScorers(raw) {
 }
 
 function MatchCard({ game }) {
-  const isLive = game.time_elapsed && game.time_elapsed !== "finished" && game.finished !== "TRUE";
+  const isLive = game.finished !== "TRUE" && /^\d+(\+\d+)?$/.test(game.time_elapsed || "");
   const isFinished = game.finished === "TRUE" || game.time_elapsed === "finished";
   const homeScore = game.home_score ?? "-";
   const awayScore = game.away_score ?? "-";
@@ -99,8 +99,9 @@ export default function LiveScoresPanel() {
   const now = new Date();
   const todayStr = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
 
+  // A game is truly live: not finished AND time_elapsed is a live minute string (e.g. "45", "90+2")
   const liveGames = games.filter(g =>
-    g.time_elapsed && g.time_elapsed !== "finished" && g.finished !== "TRUE"
+    g.finished !== "TRUE" && /^\d+(\+\d+)?$/.test(g.time_elapsed || "")
   );
 
   const todayGames = games.filter(g => {
