@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal, RefreshCw, X, Lock, Zap } from "lucide-react";
 import GhostNav from "@/components/GhostNav";
+import LiveScoresPanel from "@/components/LiveScoresPanel";
 import OpportunityCard from "@/components/OpportunityCard";
 import OpportunityDetailModal from "@/components/OpportunityDetailModal";
 import { useNavigate } from "react-router-dom";
@@ -268,6 +269,9 @@ export default function Scanner() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Live Scores Panel */}
+          <LiveScoresPanel />
 
           {/* Empty / Loading */}
           {loading ? (
