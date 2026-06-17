@@ -1,0 +1,97 @@
+{
+  "name": "TicketOpportunity",
+  "type": "object",
+  "properties": {
+    "match": {
+      "type": "string",
+      "description": "Match name e.g. Argentina vs Brazil"
+    },
+    "team_home": {
+      "type": "string"
+    },
+    "team_away": {
+      "type": "string"
+    },
+    "stadium": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "match_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Category 1",
+        "Category 2",
+        "Category 3",
+        "Category 4",
+        "VIP",
+        "Premium"
+      ]
+    },
+    "current_price": {
+      "type": "number"
+    },
+    "market_value": {
+      "type": "number"
+    },
+    "discount_pct": {
+      "type": "number"
+    },
+    "opportunity_score": {
+      "type": "number"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "quantity_available": {
+      "type": "number"
+    },
+    "demand_tier": {
+      "type": "string",
+      "enum": [
+        "Ultra High",
+        "High",
+        "Medium",
+        "Low"
+      ]
+    },
+    "group": {
+      "type": "string"
+    },
+    "round": {
+      "type": "string",
+      "enum": [
+        "Group Stage",
+        "Round of 32",
+        "Round of 16",
+        "Quarter-Final",
+        "Semi-Final",
+        "Third Place",
+        "Final"
+      ]
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_scanned": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "match",
+    "stadium",
+    "city",
+    "current_price",
+    "market_value"
+  ]
+}

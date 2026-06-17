@@ -1,0 +1,40 @@
+{
+  "name": "WatchlistItem",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "match": {
+      "type": "string"
+    },
+    "alert_threshold_price": {
+      "type": "number"
+    },
+    "alert_min_score": {
+      "type": "number"
+    },
+    "alert_email": {
+      "type": "boolean",
+      "default": true
+    },
+    "alert_sms": {
+      "type": "boolean",
+      "default": false
+    },
+    "alert_push": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "opportunity_id"
+  ]
+}

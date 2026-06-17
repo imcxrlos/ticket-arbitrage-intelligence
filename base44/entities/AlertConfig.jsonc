@@ -1,0 +1,51 @@
+{
+  "name": "AlertConfig",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "match_filter": {
+      "type": "string"
+    },
+    "city_filter": {
+      "type": "string"
+    },
+    "category_filter": {
+      "type": "string"
+    },
+    "max_price": {
+      "type": "number"
+    },
+    "min_score": {
+      "type": "number",
+      "default": 70
+    },
+    "min_discount": {
+      "type": "number",
+      "default": 15
+    },
+    "alert_email": {
+      "type": "boolean",
+      "default": true
+    },
+    "alert_sms": {
+      "type": "boolean",
+      "default": false
+    },
+    "alert_push": {
+      "type": "boolean",
+      "default": true
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}
