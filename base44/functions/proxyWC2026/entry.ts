@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
       type: g.type,
       local_date: g.local_date,
       // Normalize status: "live" | "finished" | "upcoming"
+      // A game is live ONLY if finished != TRUE and time_elapsed is a numeric minute string
       status: g.finished === "TRUE" ? "finished"
-        : (g.time_elapsed && g.time_elapsed !== "finished") ? "live"
+        : (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? "live"
         : "upcoming",
-      time_elapsed: (g.time_elapsed && g.time_elapsed !== "finished") ? g.time_elapsed : null,
+      time_elapsed: (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? g.time_elapsed : null,
     }));
 
     return Response.json({ games: clean });

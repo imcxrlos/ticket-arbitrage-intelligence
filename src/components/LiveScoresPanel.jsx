@@ -90,7 +90,7 @@ export default function LiveScoresPanel() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState("recent");
+  const [tab, setTab] = useState("today");
 
   const fetchGames = async () => {
     try {
@@ -112,20 +112,12 @@ export default function LiveScoresPanel() {
   const now = new Date();
   const todayStr = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
 
-  const liveGames = games.filter(g => g.status === "live");
   const todayGames = games.filter(g => g.local_date?.startsWith(todayStr));
   const recentGames = [...games].filter(g => g.status === "finished").reverse().slice(0, 12);
 
-  // Auto-switch to live tab if there are live games
-  useEffect(() => {
-    if (liveGames.length > 0) setTab("live");
-  }, [liveGames.length]);
-
-  const visibleGames = tab === "live" ? liveGames : tab === "today" ? todayGames : recentGames;
-  const liveCount = liveGames.length;
+  const visibleGames = tab === "today" ? todayGames : recentGames;
 
   const tabs = [
-    { key: "live", label: "Live", count: liveCount },
     { key: "today", label: "Today", count: todayGames.length },
     { key: "recent", label: "Results", count: recentGames.length },
   ];
@@ -139,12 +131,7 @@ export default function LiveScoresPanel() {
         <div className="flex items-center gap-3">
           <Radio className="w-3.5 h-3.5 text-white/30" />
           <span className="text-xs font-display font-semibold text-white/60 tracking-wide">WC 2026 — Match Center</span>
-          {liveCount > 0 && (
-            <div className="flex items-center gap-1.5 bg-[hsl(var(--ghost-green))/10] border border-[hsl(var(--ghost-green))/20] rounded-full px-2 py-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-green))] pulse-dot" />
-              <span className="text-[9px] font-mono text-[hsl(var(--ghost-green))] uppercase tracking-widest">{liveCount} Live</span>
-            </div>
-          )}
+
         </div>
         <ChevronDown className={`w-3.5 h-3.5 text-white/20 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -175,9 +162,7 @@ export default function LiveScoresPanel() {
                       {t.count}
                     </span>
                   )}
-                  {t.key === "live" && t.count > 0 && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-green))] pulse-dot" />
-                  )}
+
                 </button>
               ))}
             </div>
@@ -191,7 +176,7 @@ export default function LiveScoresPanel() {
             ) : visibleGames.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-xs text-white/20 font-mono">
-                  {tab === "live" ? "No matches in progress right now" : tab === "today" ? "No matches scheduled today" : "No recent results"}
+                  {tab === "today" ? "No matches scheduled today" : "No recent results"}
                 </p>
               </div>
             ) : (
