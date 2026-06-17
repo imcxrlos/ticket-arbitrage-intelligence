@@ -203,21 +203,15 @@ export default function OpportunityDetailModal({ opportunity, isSaved, onSave, o
               </div>
             ) : (
               <div className="flex gap-2.5">
-                {source_url ? (
-                  <a
-                    href={source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 h-11 flex items-center justify-center gap-2 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all"
-                  >
-                    <ArrowUpRight className="w-4 h-4" />
-                    Get Tickets
-                  </a>
-                ) : (
-                  <div className="flex-1 h-11 flex items-center justify-center gap-2 bg-white/8 border border-white/10 text-white/30 text-sm rounded-xl cursor-not-allowed">
-                    No Link Available
-                  </div>
-                )}
+                <a
+                  href={source_url || `https://www.google.com/search?q=${encodeURIComponent(`${match} FIFA World Cup 2026 tickets`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 h-11 flex items-center justify-center gap-2 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all"
+                >
+                  <ArrowUpRight className="w-4 h-4" />
+                  Get Tickets
+                </a>
                 <button
                   onClick={() => onSave(opportunity)}
                   className={`h-11 w-11 flex items-center justify-center rounded-xl border transition-all ${
