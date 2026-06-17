@@ -129,195 +129,222 @@ export default function Scanner() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <GhostNav user={user} />
 
-      {/* Ticker */}
-      <div className="fixed top-14 left-0 right-0 z-40 border-b border-white/5 bg-[#0A0A0A]/90 backdrop-blur-md overflow-hidden h-8 flex items-center">
-        <div className="flex items-center gap-3 px-4 shrink-0 border-r border-white/8 h-full">
-          <div className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-ghost-amber" : "bg-ghost-green"} pulse-dot`} />
-          <span className="text-[10px] text-white/35 font-mono uppercase tracking-widest">
-            {refreshing ? "Scanning..." : "Live"}
-          </span>
-        </div>
-        <div className="overflow-hidden flex-1">
-          <div className="ticker-track">
-            {[...TICKER, ...TICKER].map((item, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 shrink-0">
-                <span className="text-[11px] text-white/50 font-mono">{item.match}</span>
-                <span className="text-[11px] text-ghost-green font-mono">{item.discount} below market</span>
-                <span className="text-white/15 mx-1">|</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <div className="pt-20 pb-16 flex h-screen overflow-hidden">
 
-      <div className="pt-28 pb-16 px-6">
-        <div className="max-w-7xl mx-auto">
-
-          {/* Page header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-            <div>
-              <h1 className="font-display text-2xl font-bold text-white mb-1">Market Scanner</h1>
-              <p className="text-sm text-white/30 font-mono">
-                {loading ? "Loading..." : `${filtered.length} opportunities detected · Last scan ${lastScan.toLocaleTimeString()}`}
-              </p>
+        {/* ── LEFT SIDEBAR ── */}
+        <aside className="hidden lg:flex flex-col w-72 shrink-0 border-r border-white/[0.05] overflow-y-auto px-5 py-6 gap-6">
+          {/* Brand / status */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h1 className="font-display text-sm font-semibold text-white tracking-wide">Market Scanner</h1>
+              <div className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-ghost-amber" : "bg-ghost-green"} pulse-dot`} />
             </div>
-            <div className="flex items-center gap-2">
-              {user && (
-                <button
-                  onClick={handleSyncLive}
-                  disabled={refreshing}
-                  className="h-8 px-3 bg-white/8 border border-white/15 rounded text-xs text-white/70 hover:text-white hover:bg-white/12 transition-all flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <Zap className={`w-3 h-3 ${refreshing ? "animate-pulse" : ""}`} />
-                  Sync Live
-                </button>
-              )}
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="h-8 px-3 glass border border-white/10 rounded text-xs text-white/50 hover:text-white transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-                Refresh
-              </button>
-              <button
-                onClick={() => setShowFilters(v => !v)}
-                className={`h-8 px-3 rounded text-xs flex items-center gap-1.5 transition-all ${showFilters ? "bg-white text-black" : "glass border border-white/10 text-white/50 hover:text-white"}`}
-              >
-                <SlidersHorizontal className="w-3 h-3" />
-                Filters
-              </button>
-            </div>
+            <p className="text-[10px] text-white/25 font-mono">
+              {loading ? "Loading..." : `${filtered.length} results`}
+            </p>
           </div>
 
-          {/* Search + Sort */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25" />
-              <input
-                value={filters.search}
-                onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-                placeholder="Search match or city..."
-                className="w-full h-9 pl-9 pr-4 bg-white/4 border border-white/8 rounded text-sm text-white placeholder:text-white/20 font-mono outline-none focus:border-white/20 transition-colors"
-              />
-            </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+            <input
+              value={filters.search}
+              onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+              placeholder="Search match or city..."
+              className="w-full h-9 pl-9 pr-3 bg-white/4 border border-white/8 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors"
+            />
+          </div>
+
+          {/* Sort */}
+          <div>
+            <label className="text-[9px] font-mono text-white/20 uppercase tracking-widest block mb-2">Sort by</label>
             <select
               value={filters.sortBy}
               onChange={e => setFilters(f => ({ ...f, sortBy: e.target.value }))}
-              className="h-9 px-3 bg-white/4 border border-white/8 rounded text-xs text-white/60 font-mono outline-none appearance-none cursor-pointer hover:border-white/15 transition-colors"
+              className="w-full h-8 px-2 bg-white/4 border border-white/8 rounded-lg text-xs text-white/60 font-mono outline-none appearance-none cursor-pointer"
             >
-              <option value="score">Sort: Score</option>
-              <option value="discount">Sort: Discount</option>
-              <option value="price_asc">Sort: Price ↑</option>
-              <option value="price_desc">Sort: Price ↓</option>
+              <option value="score">Opportunity Score</option>
+              <option value="discount">Discount %</option>
+              <option value="price_asc">Price: Low → High</option>
+              <option value="price_desc">Price: High → Low</option>
             </select>
           </div>
 
-          {/* Filters panel */}
+          {/* Divider */}
+          <div className="border-t border-white/[0.05]" />
+
+          {/* Filters */}
+          <div className="space-y-4">
+            <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest">Filters</span>
+
+            {[
+              { label: "City", key: "city", options: CITIES },
+              { label: "Category", key: "category", options: CATEGORIES },
+              { label: "Round", key: "round", options: ROUNDS },
+            ].map(({ label, key, options }) => (
+              <div key={key}>
+                <label className="text-[10px] text-white/30 font-mono block mb-1.5">{label}</label>
+                <select
+                  value={filters[key]}
+                  onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))}
+                  className="w-full h-8 px-2 bg-white/3 border border-white/8 rounded text-xs text-white/55 font-mono outline-none appearance-none cursor-pointer hover:border-white/12 transition-colors"
+                >
+                  {options.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+            ))}
+
+            <div>
+              <label className="text-[10px] text-white/30 font-mono block mb-1.5">Min Score</label>
+              <input type="number" min={0} max={100} value={filters.minScore}
+                onChange={e => setFilters(f => ({ ...f, minScore: Number(e.target.value) }))}
+                placeholder="0"
+                className="w-full h-8 px-2 bg-white/3 border border-white/8 rounded text-xs text-white/55 font-mono outline-none hover:border-white/12 transition-colors" />
+            </div>
+
+            <div>
+              <label className="text-[10px] text-white/30 font-mono block mb-1.5">Max Price ($)</label>
+              <input type="number" value={filters.maxPrice}
+                onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
+                placeholder="Any"
+                className="w-full h-8 px-2 bg-white/3 border border-white/8 rounded text-xs text-white/55 font-mono outline-none hover:border-white/12 transition-colors" />
+            </div>
+
+            <div>
+              <label className="text-[10px] text-white/30 font-mono block mb-1.5">Min Discount (%)</label>
+              <input type="number" min={0} max={100} value={filters.minDiscount}
+                onChange={e => setFilters(f => ({ ...f, minDiscount: Number(e.target.value) }))}
+                placeholder="0"
+                className="w-full h-8 px-2 bg-white/3 border border-white/8 rounded text-xs text-white/55 font-mono outline-none hover:border-white/12 transition-colors" />
+            </div>
+
+            <button
+              onClick={() => setFilters(f => ({ ...f, search: "", city: "All", category: "All", round: "All", minScore: 0, maxPrice: "", minDiscount: 0 }))}
+              className="text-[10px] text-white/20 hover:text-white/50 font-mono transition-colors underline underline-offset-2"
+            >
+              Clear all filters
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/[0.05]" />
+
+          {/* Actions */}
+          <div className="space-y-2">
+            {user && (
+              <button
+                onClick={handleSyncLive}
+                disabled={refreshing}
+                className="w-full h-8 bg-white/6 border border-white/10 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+              >
+                <Zap className={`w-3 h-3 ${refreshing ? "animate-pulse" : ""}`} />
+                Sync Live Data
+              </button>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="w-full h-8 border border-white/8 rounded-lg text-xs text-white/35 hover:text-white/70 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
+        </aside>
+
+        {/* ── MAIN CONTENT ── */}
+        <main className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
+
+          {/* Mobile header */}
+          <div className="flex lg:hidden items-center justify-between mb-5">
+            <div>
+              <h1 className="font-display text-xl font-bold text-white">Market Scanner</h1>
+              <p className="text-[10px] text-white/25 font-mono mt-0.5">{loading ? "Loading..." : `${filtered.length} results`}</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowFilters(v => !v)}
+                className={`h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 transition-all ${showFilters ? "bg-white text-black" : "border border-white/10 text-white/50 hover:text-white"}`}>
+                <SlidersHorizontal className="w-3 h-3" />
+                Filters
+              </button>
+              <button onClick={handleRefresh} disabled={refreshing}
+                className="h-8 w-8 border border-white/10 rounded-lg flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-40">
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile filters */}
           <AnimatePresence>
             {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="glass-card rounded-lg p-4 mb-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">City</label>
-                    <select value={filters.city} onChange={e => setFilters(f => ({ ...f, city: e.target.value }))}
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none">
-                      {CITIES.map(c => <option key={c}>{c}</option>)}
-                    </select>
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden lg:hidden">
+                <div className="grid grid-cols-2 gap-2 mb-5 p-4 bg-white/3 border border-white/6 rounded-xl">
+                  <div className="relative col-span-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+                    <input value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} placeholder="Search..." className="w-full h-8 pl-8 pr-3 bg-white/4 border border-white/8 rounded text-xs text-white placeholder:text-white/20 font-mono outline-none" />
                   </div>
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">Category</label>
-                    <select value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none">
-                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">Round</label>
-                    <select value={filters.round} onChange={e => setFilters(f => ({ ...f, round: e.target.value }))}
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none">
-                      {ROUNDS.map(r => <option key={r}>{r}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">Min Score</label>
-                    <input type="number" min={0} max={100} value={filters.minScore}
-                      onChange={e => setFilters(f => ({ ...f, minScore: Number(e.target.value) }))}
-                      placeholder="0"
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">Max Price</label>
-                    <input type="number" value={filters.maxPrice}
-                      onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
-                      placeholder="Any"
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-white/25 font-mono uppercase tracking-wider block mb-1.5">Min Discount</label>
-                    <input type="number" min={0} max={100} value={filters.minDiscount}
-                      onChange={e => setFilters(f => ({ ...f, minDiscount: Number(e.target.value) }))}
-                      placeholder="0%"
-                      className="w-full h-8 px-2 bg-black/40 border border-white/8 rounded text-xs text-white/60 font-mono outline-none" />
-                  </div>
+                  {[{ label: "City", key: "city", opts: CITIES }, { label: "Category", key: "category", opts: CATEGORIES }, { label: "Round", key: "round", opts: ROUNDS }].map(({ label, key, opts }) => (
+                    <div key={key}>
+                      <label className="text-[9px] text-white/25 font-mono block mb-1">{label}</label>
+                      <select value={filters[key]} onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))} className="w-full h-7 px-2 bg-black/30 border border-white/8 rounded text-[10px] text-white/55 font-mono outline-none">
+                        {opts.map(o => <option key={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Live Scores Panel */}
+          {/* Match Center */}
           <LiveScoresPanel />
 
-          {/* Empty / Loading */}
+          {/* Cards */}
           {loading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="glass-card rounded-lg h-52 shimmer" />
+                <div key={i} className="bg-white/3 rounded-xl h-52 shimmer border border-white/[0.04]" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-24 text-center">
-              <div className="text-white/20 font-mono text-sm mb-2">No opportunities match your filters</div>
-              <button onClick={() => setFilters(f => ({ ...f, search: "", city: "All", category: "All", round: "All", minScore: 0, maxPrice: "", minDiscount: 0 }))}
-                className="text-xs text-white/30 hover:text-white underline font-mono transition-colors">
-                Clear all filters
+            <div className="py-32 text-center">
+              <div className="text-white/20 font-mono text-sm mb-3">No opportunities match your filters</div>
+              <button
+                onClick={() => setFilters(f => ({ ...f, search: "", city: "All", category: "All", round: "All", minScore: 0, maxPrice: "", minDiscount: 0 }))}
+                className="text-xs text-white/30 hover:text-white underline font-mono transition-colors"
+              >
+                Clear filters
               </button>
             </div>
           ) : (
             <>
-              {/* Top opportunity highlight */}
+              {/* Top opportunity */}
               {topOpp && (
                 <div
-                  className="glass-card rounded-lg border-white/12 p-5 mb-6 cursor-pointer hover:border-white/18 transition-all relative overflow-hidden"
+                  className="bg-white/[0.03] border border-white/8 rounded-xl p-5 mb-6 cursor-pointer hover:border-white/14 transition-all relative overflow-hidden group"
                   onClick={() => setSelectedOpp(topOpp)}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-ghost-green/5 rounded-full -translate-y-8 translate-x-8 blur-2xl pointer-events-none" />
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-ghost-green/5 rounded-full -translate-y-12 translate-x-12 blur-3xl pointer-events-none group-hover:bg-ghost-green/8 transition-all" />
+                  <div className="flex items-center justify-between gap-6">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                        <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Top Opportunity</span>
+                        <span className="text-[9px] font-mono text-white/25 uppercase tracking-widest">Top Opportunity</span>
                       </div>
-                      <div className="font-display text-xl font-bold text-white mb-1">{topOpp.match}</div>
-                      <div className="text-xs text-white/35 font-mono">{topOpp.stadium} · {topOpp.city}</div>
+                      <div className="font-display text-lg font-bold text-white mb-1">{topOpp.match}</div>
+                      <div className="text-xs text-white/30 font-mono">{topOpp.stadium} · {topOpp.city}</div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="text-3xl font-display font-bold text-ghost-green">
+                      <div className="text-4xl font-display font-bold text-ghost-green leading-none">
                         −{topOpp.discount_pct ?? Math.round((1 - topOpp.current_price / topOpp.market_value) * 100)}%
                       </div>
-                      <div className="text-xs text-white/25 font-mono">below market</div>
-                      <div className="text-sm text-white/50 font-mono mt-1">Score {topOpp.opportunity_score}/100</div>
+                      <div className="text-[10px] text-white/25 font-mono mt-1">below market · score {topOpp.opportunity_score}</div>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filtered.map((opp, i) => (
                   <OpportunityCard
                     key={opp.id}
@@ -331,7 +358,7 @@ export default function Scanner() {
               </div>
             </>
           )}
-        </div>
+        </main>
       </div>
 
       {selectedOpp && (
