@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, RefreshCw, X, Lock } from "lucide-react";
+import { Search, SlidersHorizontal, RefreshCw, X, Lock, Zap } from "lucide-react";
 import GhostNav from "@/components/GhostNav";
 import OpportunityCard from "@/components/OpportunityCard";
 import OpportunityDetailModal from "@/components/OpportunityDetailModal";
@@ -69,6 +69,17 @@ export default function Scanner() {
     setRefreshing(true);
     await loadOpportunities();
     setRefreshing(false);
+  };
+
+  const handleSyncLive = async () => {
+    if (!user) { navigate("/login"); return; }
+    setRefreshing(true);
+    try {
+      await base44.functions.invoke('syncOpportunities', {});
+      await loadOpportunities();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleSave = async (opp) => {
@@ -150,6 +161,16 @@ export default function Scanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {user && (
+                <button
+                  onClick={handleSyncLive}
+                  disabled={refreshing}
+                  className="h-8 px-3 bg-white/8 border border-white/15 rounded text-xs text-white/70 hover:text-white hover:bg-white/12 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Zap className={`w-3 h-3 ${refreshing ? "animate-pulse" : ""}`} />
+                  Sync Live
+                </button>
+              )}
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
