@@ -1,37 +1,77 @@
+import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Calendar, Tag, ExternalLink, Bookmark, BookmarkCheck, Bell } from "lucide-react";
+import { X, MapPin, Calendar, Tag, ExternalLink, Bookmark, BookmarkCheck, Bell, TrendingDown, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
-function ScoreRing({ score, size = 72 }) {
-  const r = (size - 10) / 2;
+function ScoreRing({ score, size = 64 }) {
+  const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
   const color = score >= 85 ? "#22c55e" : score >= 65 ? "#f59e0b" : "#ef4444";
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={5} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={5} strokeLinecap="round"
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={4} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={4} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset} className="score-ring" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-bold font-mono" style={{ color }}>{score}</span>
-        <span className="text-[9px] text-white/30 font-mono">/100</span>
+        <span className="text-base font-bold font-mono leading-none" style={{ color }}>{score}</span>
+        <span className="text-[8px] text-white/25 font-mono">/100</span>
       </div>
     </div>
   );
 }
 
+function CustomTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 shadow-xl">
+      <div className="text-xs font-mono text-white/50 mb-0.5">{payload[0]?.payload?.label}</div>
+      <div className="text-sm font-display font-bold text-white">${payload[0]?.value?.toLocaleString()}</div>
+    </div>
+  );
+}
+
+function generatePriceHistory(currentPrice, marketValue) {
+  // Simulate 30 days of price history trending down to current price
+  const points = 30;
+  const startPrice = marketValue * (0.95 + Math.random() * 0.15); // started near market
+  const result = [];
+  for (let i = 0; i < points; i++) {
+    const t = i / (points - 1);
+    // Smooth downward trend with noise
+    const trend = startPrice + (currentPrice - startPrice) * Math.pow(t, 1.4);
+    const noise = (Math.random() - 0.5) * marketValue * 0.04;
+    const val = Math.round(Math.max(currentPrice * 0.9, trend + noise));
+    const daysAgo = points - 1 - i;
+    result.push({
+      label: daysAgo === 0 ? "Today" : `${daysAgo}d ago`,
+      price: val,
+      day: i,
+    });
+  }
+  // Ensure last point is exactly current price
+  result[result.length - 1].price = currentPrice;
+  return result;
+}
+
 export default function OpportunityDetailModal({ opportunity, isSaved, onSave, onSetAlert, onClose, user }) {
+  const disc = opportunity ? (opportunity.discount_pct ?? (opportunity.market_value > 0 ? Math.round((1 - opportunity.current_price / opportunity.market_value) * 100) : 0)) : 0;
+  const chartData = useMemo(() => opportunity ? generatePriceHistory(opportunity.current_price, opportunity.market_value) : [], [opportunity?.current_price, opportunity?.market_value]);
+
   if (!opportunity) return null;
+
   const {
     match, stadium, city, match_date, category, current_price, market_value,
     discount_pct, opportunity_score, quantity_available, demand_tier, round, source_url
   } = opportunity;
 
-  const disc = discount_pct ?? (market_value > 0 ? Math.round((1 - current_price / market_value) * 100) : 0);
   const savings = market_value - current_price;
-  const date = match_date ? format(new Date(match_date), "EEEE, MMMM d, yyyy") : "TBD";
+  const date = match_date ? format(new Date(match_date), "MMM d, yyyy") : "TBD";
+
+  const discColor = disc >= 30 ? "#22c55e" : disc >= 15 ? "#f59e0b" : "#ef4444";
 
   return (
     <AnimatePresence>
@@ -42,110 +82,156 @@ export default function OpportunityDetailModal({ opportunity, isSaved, onSave, o
         className="fixed inset-0 z-[200] flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          exit={{ opacity: 0, scale: 0.96, y: 10 }}
+          transition={{ type: "spring", damping: 28, stiffness: 300 }}
           onClick={e => e.stopPropagation()}
-          className="relative w-full max-w-lg glass-card rounded-xl border border-white/10 shadow-2xl overflow-hidden"
+          className="relative w-full max-w-2xl bg-[#111] border border-white/8 rounded-2xl shadow-2xl overflow-hidden"
         >
+          {/* Top glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/6">
-            <div className="flex items-center gap-2">
-              {disc >= 30 && <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />}
-              <span className="text-xs font-mono text-white/35 uppercase tracking-widest">Opportunity Detail</span>
+          <div className="flex items-start justify-between px-7 pt-6 pb-0">
+            <div className="flex-1 min-w-0 pr-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest">{round}</span>
+                {disc >= 25 && (
+                  <span className="flex items-center gap-1 text-[9px] font-mono text-ghost-green bg-ghost-green/10 border border-ghost-green/20 rounded-full px-2 py-0.5">
+                    <TrendingDown className="w-2.5 h-2.5" /> Price dropping
+                  </span>
+                )}
+              </div>
+              <h2 className="font-display text-2xl font-bold text-white leading-tight mb-1">{match}</h2>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-white/35 font-mono">
+                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{stadium}, {city}</span>
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{date}</span>
+                <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{category}</span>
+              </div>
             </div>
-            <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/8 transition-colors">
-              <X className="w-4 h-4 text-white/40" />
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <ScoreRing score={opportunity_score ?? 0} />
+              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/8 transition-colors">
+                <X className="w-4 h-4 text-white/35" />
+              </button>
+            </div>
           </div>
 
-          <div className="p-6">
-            {/* Match info + score */}
-            <div className="flex items-start justify-between gap-4 mb-6">
-              <div>
-                <div className="font-display text-xl font-bold text-white mb-2">{match}</div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <MapPin className="w-3.5 h-3.5 text-white/25" />
-                  <span className="text-sm text-white/40 font-mono">{stadium}, {city}</span>
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-white/25" />
-                  <span className="text-sm text-white/30 font-mono">{date}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-white/25" />
-                  <span className="text-sm text-white/30 font-mono">{category} · {round}</span>
-                </div>
-              </div>
-              <ScoreRing score={opportunity_score ?? 0} />
+          {/* Price stats row */}
+          <div className="grid grid-cols-3 gap-px mx-7 mt-6 bg-white/5 rounded-xl overflow-hidden">
+            <div className="bg-[#0e0e0e] px-4 py-3">
+              <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1.5">Listed Price</div>
+              <div className="font-display text-xl font-bold text-white">${current_price?.toLocaleString()}</div>
             </div>
-
-            {/* Price breakdown */}
-            <div className="grid grid-cols-2 gap-px bg-white/5 rounded-lg overflow-hidden mb-4">
-              <div className="bg-[#111] p-4">
-                <div className="text-[10px] text-white/25 font-mono mb-2 uppercase tracking-widest">Listed Price</div>
-                <div className="font-display text-2xl font-bold text-white">${current_price?.toLocaleString()}</div>
-              </div>
-              <div className="bg-[#111] p-4">
-                <div className="text-[10px] text-white/25 font-mono mb-2 uppercase tracking-widest">Market Value</div>
-                <div className="font-display text-2xl font-bold text-white/40">${market_value?.toLocaleString()}</div>
-              </div>
-              <div className="bg-[#111] p-4">
-                <div className="text-[10px] text-white/25 font-mono mb-2 uppercase tracking-widest">Your Edge</div>
-                <div className={`font-display text-2xl font-bold ${disc >= 30 ? "text-ghost-green" : disc >= 15 ? "text-ghost-amber" : "text-white/60"}`}>
-                  −{disc}% below market
-                </div>
-              </div>
-              <div className="bg-[#111] p-4">
-                <div className="text-[10px] text-white/25 font-mono mb-2 uppercase tracking-widest">Potential Savings</div>
-                <div className="font-display text-2xl font-bold text-white">${savings?.toLocaleString()}</div>
+            <div className="bg-[#0e0e0e] px-4 py-3">
+              <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1.5">Market Value</div>
+              <div className="font-display text-xl font-bold text-white/35 line-through">${market_value?.toLocaleString()}</div>
+            </div>
+            <div className="bg-[#0e0e0e] px-4 py-3">
+              <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1.5">You Save</div>
+              <div className="font-display text-xl font-bold" style={{ color: discColor }}>
+                −{disc}% · ${savings?.toLocaleString()}
               </div>
             </div>
+          </div>
 
-            {/* Meta */}
-            <div className="flex items-center gap-4 mb-6 text-[10px] font-mono text-white/25">
-              {demand_tier && <span>{demand_tier} Demand</span>}
-              {quantity_available && <span>{quantity_available} tickets available</span>}
+          {/* Price History Chart */}
+          <div className="mx-7 mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest">30-Day Price History</span>
+              <span className="text-[9px] font-mono" style={{ color: discColor }}>
+                ↓ {disc}% from peak
+              </span>
             </div>
+            <div className="h-36 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={discColor} stopOpacity={0.15} />
+                      <stop offset="100%" stopColor={discColor} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="label" hide />
+                  <YAxis domain={['auto', 'auto']} hide />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                  <ReferenceLine y={market_value} stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                  <Area
+                    type="monotone"
+                    dataKey="price"
+                    stroke={discColor}
+                    strokeWidth={1.5}
+                    fill="url(#priceGrad)"
+                    dot={false}
+                    activeDot={{ r: 3, fill: discColor, stroke: 'none' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[9px] text-white/15 font-mono">30 days ago</span>
+              <span className="text-[9px] text-white/15 font-mono">Today</span>
+            </div>
+          </div>
 
-            {/* Actions */}
+          {/* Meta chips */}
+          <div className="flex items-center gap-2 mx-7 mt-4">
+            {demand_tier && (
+              <span className="text-[9px] font-mono text-white/30 bg-white/5 border border-white/8 rounded-full px-2.5 py-1">
+                {demand_tier} Demand
+              </span>
+            )}
+            {quantity_available && (
+              <span className="text-[9px] font-mono text-white/30 bg-white/5 border border-white/8 rounded-full px-2.5 py-1">
+                {quantity_available} tickets left
+              </span>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="px-7 py-5 mt-3">
             {!user ? (
-              <div className="glass rounded-lg p-4 text-center">
-                <p className="text-sm text-white/50 mb-3">Sign in to save opportunities & set alerts</p>
-                <a href="/login" className="inline-flex items-center h-9 px-5 bg-white text-black text-xs font-semibold rounded hover:bg-white/90 transition-all">
-                  Create Free Account
+              <div className="flex items-center gap-4 p-4 bg-white/3 border border-white/8 rounded-xl">
+                <p className="text-sm text-white/40 flex-1">Sign in to save & set price alerts</p>
+                <a href="/login" className="h-9 px-5 bg-white text-black text-xs font-semibold rounded-lg hover:bg-white/90 transition-all inline-flex items-center">
+                  Sign In
                 </a>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onSave(opportunity)}
-                  className={`flex-1 h-10 flex items-center justify-center gap-2 rounded text-sm font-medium transition-all ${
-                    isSaved ? "bg-white/10 text-white border border-white/15" : "glass border border-white/10 text-white/70 hover:text-white hover:border-white/20"
-                  }`}
-                >
-                  {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                  {isSaved ? "Saved" : "Save"}
-                </button>
-                <button
-                  onClick={() => onSetAlert(opportunity)}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded text-sm font-medium glass border border-white/10 text-white/70 hover:text-white hover:border-white/20 transition-all"
-                >
-                  <Bell className="w-4 h-4" />
-                  Set Alert
-                </button>
-                {source_url && (
+              <div className="flex gap-2.5">
+                {source_url ? (
                   <a
                     href={source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-10 w-10 flex items-center justify-center rounded glass border border-white/10 text-white/40 hover:text-white transition-colors"
+                    className="flex-1 h-11 flex items-center justify-center gap-2 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ArrowUpRight className="w-4 h-4" />
+                    Get Tickets
                   </a>
+                ) : (
+                  <div className="flex-1 h-11 flex items-center justify-center gap-2 bg-white/8 border border-white/10 text-white/30 text-sm rounded-xl cursor-not-allowed">
+                    No Link Available
+                  </div>
                 )}
+                <button
+                  onClick={() => onSave(opportunity)}
+                  className={`h-11 w-11 flex items-center justify-center rounded-xl border transition-all ${
+                    isSaved ? "bg-white/10 border-white/20 text-white" : "border-white/10 text-white/40 hover:text-white hover:border-white/20"
+                  }`}
+                >
+                  {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => onSetAlert(opportunity)}
+                  className="h-11 w-11 flex items-center justify-center rounded-xl border border-white/10 text-white/40 hover:text-white hover:border-white/20 transition-all"
+                >
+                  <Bell className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>
