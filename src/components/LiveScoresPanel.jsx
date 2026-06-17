@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Radio } from "lucide-react";
-
-const API_BASE = "http://worldcup26.ir:3050";
+import { base44 } from "@/api/base44Client";
 
 function parseScorers(raw) {
   if (!raw || raw === "null") return [];
@@ -77,16 +76,14 @@ export default function LiveScoresPanel() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState("today"); // today | live | recent
+  const [tab, setTab] = useState("recent"); // today | live | recent
 
   const fetchGames = async () => {
     try {
-      const res = await fetch(`${API_BASE}/get/games`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setGames(data.games || []);
+      const res = await base44.functions.invoke('proxyWC2026', {});
+      setGames(res.data?.games || []);
     } catch {
-      // API may be flaky; silently fail
+      // silently fail
     } finally {
       setLoading(false);
     }
@@ -98,8 +95,9 @@ export default function LiveScoresPanel() {
     return () => clearInterval(interval);
   }, []);
 
-  // Derive views
-  const today = new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+  // Derive views — API date format: MM/DD/YYYY
+  const now = new Date();
+  const todayStr = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
 
   const liveGames = games.filter(g =>
     g.time_elapsed && g.time_elapsed !== "finished" && g.finished !== "TRUE"
@@ -108,12 +106,12 @@ export default function LiveScoresPanel() {
   const todayGames = games.filter(g => {
     if (!g.local_date) return false;
     const [datePart] = g.local_date.split(" ");
-    return datePart === today;
+    return datePart === todayStr;
   });
 
   const recentGames = games
     .filter(g => g.finished === "TRUE" || g.time_elapsed === "finished")
-    .slice(-8)
+    .slice(-12)
     .reverse();
 
   const visibleGames = tab === "live" ? liveGames
