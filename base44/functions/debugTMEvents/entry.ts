@@ -8,53 +8,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const tmApiKey = Deno.env.get('TICKETMASTER_API_KEY');
+    const tdUser = Deno.env.get('TICKETSDATA_USERNAME');
+    const tdPass = Deno.env.get('TICKETSDATA_PASSWORD');
 
-    // Search for WC2026 events
-    const searchUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmApiKey}&keyword=FIFA+World+Cup+2026&size=10&sort=date,asc&classificationName=Sports`;
-    const searchRes = await fetch(searchUrl);
-    const searchData = await searchRes.json();
-    const events = searchData._embedded?.events || [];
+    // Step 1: Discover WC2026 events from StubHub performer page
+    const eventsUrl = new URL('https://ticketsdata.com/events');
+    eventsUrl.searchParams.set('username', tdUser);
+    eventsUrl.searchParams.set('password', tdPass);
+    eventsUrl.searchParams.set('platform', 'stubhub');
+    eventsUrl.searchParams.set('performer_url', 'https://www.stubhub.com/fifa-world-cup-tickets/performer/4750453/');
 
-    // Get full detail for first event
-    const firstEvent = events[0];
-    let fullDetail = null;
-    if (firstEvent) {
-      const detailRes = await fetch(`https://app.ticketmaster.com/discovery/v2/events/${firstEvent.id}?apikey=${tmApiKey}`);
-      fullDetail = await detailRes.json();
-    }
+    const evRes = await fetch(eventsUrl.toString());
+    const evText = await evRes.text();
+    let evData;
+    try { evData = JSON.parse(evText); } catch { evData = { raw: evText.substring(0, 1000) }; }
 
-    // Also try SeatGeek for WC2026
-    const sgRes = await fetch(`https://api.seatgeek.com/2/events?q=FIFA+World+Cup+2026&per_page=5&sort=score.desc`);
-    const sgData = await sgRes.json();
+    // Step 2: Also try seatgeek performer page
+    const sgUrl = new URL('https://ticketsdata.com/events');
+    sgUrl.searchParams.set('username', tdUser);
+    sgUrl.searchParams.set('password', tdPass);
+    sgUrl.searchParams.set('platform', 'seatgeek');
+    sgUrl.searchParams.set('performer_url', 'https://seatgeek.com/fifa-world-cup-tickets');
+
+    const sgRes = await fetch(sgUrl.toString());
+    const sgText = await sgRes.text();
+    let sgData;
+    try { sgData = JSON.parse(sgText); } catch { sgData = { raw: sgText.substring(0, 1000) }; }
 
     return Response.json({
-      tm_count: events.length,
-      tm_events_summary: events.map(e => ({
-        id: e.id,
-        name: e.name,
-        date: e.dates?.start?.localDate,
-        has_price_ranges: !!e.priceRanges,
-        price_ranges: e.priceRanges || null,
-        sales: e.sales || null,
-        url: e.url,
-      })),
-      tm_first_full: fullDetail ? {
-        priceRanges: fullDetail.priceRanges,
-        sales: fullDetail.sales,
-        ticketing: fullDetail.ticketing,
-        accessibility: fullDetail.accessibility,
-      } : null,
-      sg_count: sgData.events?.length || 0,
-      sg_events: (sgData.events || []).map(e => ({
-        id: e.id,
-        title: e.title,
-        date: e.datetime_local,
-        lowest_price: e.stats?.lowest_price,
-        avg_price: e.stats?.average_price,
-        listing_count: e.stats?.listing_count,
-        url: e.url,
-      })),
+      stubhub_status: evRes.status,
+      stubhub_events: evData,
+      seatgeek_status: sgRes.status,
+      seatgeek_events: sgData,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
