@@ -16,7 +16,7 @@ const TICKER_ITEMS = [
 ];
 
 const HERO_STATS = [
-  { label: "Opportunities Found", value: "2,841" },
+  { label: "Opportunities Found", value: "142+" },
   { label: "Avg. Discount", value: "31%" },
   { label: "Markets Scanned", value: "12" },
 ];
@@ -52,7 +52,7 @@ const HOW_STEPS = [
 
 export default function Landing() {
   const [scanActive, setScanActive] = useState(false);
-  const [liveCount, setLiveCount] = useState(2841);
+  const [liveCount, setLiveCount] = useState(142);
 
   useEffect(() => {
     const interval = setInterval(() => {
