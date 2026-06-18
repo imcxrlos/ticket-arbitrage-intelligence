@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 const TICKER_ITEMS = [
   { match: "Argentina vs Brazil", score: 94, discount: "41%" },
@@ -333,51 +334,128 @@ export default function Landing() {
   );
 }
 
+const PRICE_HISTORY = [
+  { day: "Jun 12", tm: 2180, sg: 2340 },
+  { day: "Jun 13", tm: 2150, sg: 2290 },
+  { day: "Jun 14", tm: 2210, sg: 2380 },
+  { day: "Jun 15", tm: 2080, sg: 2260 },
+  { day: "Jun 16", tm: 1940, sg: 2190 },
+  { day: "Jun 17", tm: 1870, sg: 2140 },
+  { day: "Jun 18", tm: 1760, sg: 2090 },
+];
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="glass-card border border-white/10 rounded-lg px-3 py-2.5 shadow-2xl">
+      <p className="text-[10px] font-mono text-white/30 mb-1.5 uppercase tracking-widest">{label}</p>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center gap-2 text-xs font-mono">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
+          <span className="text-white/50 capitalize">{p.dataKey === "tm" ? "Ticketmaster" : "SeatGeek"}</span>
+          <span className="text-white font-semibold ml-1">${p.value.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 function PreviewCard() {
+  const latest = PRICE_HISTORY[PRICE_HISTORY.length - 1];
+  const prev = PRICE_HISTORY[0];
+  const tmDrop = Math.round(((prev.tm - latest.tm) / prev.tm) * 100);
+  const spread = latest.sg - latest.tm;
+
   return (
     <div className="relative">
-      <div className="glass-card rounded-lg overflow-hidden border border-white/8 shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/6">
+      <div className="glass-card rounded-xl overflow-hidden border border-white/8 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-            <span className="text-xs text-white/40 font-mono">LIVE OPPORTUNITY</span>
+            <span className="text-[10px] text-white/40 font-mono uppercase tracking-widest">Price Intelligence</span>
           </div>
-          <span className="text-xs font-mono text-white/25">Score: 94/100</span>
+          <span className="text-[10px] font-mono text-white/20">Last 7 days</span>
         </div>
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="text-lg font-display font-semibold text-white mb-1">Argentina vs Brazil</div>
-              <div className="text-xs text-white/35 font-mono">MetLife Stadium · East Rutherford, NJ</div>
-              <div className="text-xs text-white/25 font-mono mt-0.5">Group Stage · Jul 2, 2026</div>
-            </div>
-            <ScoreRing score={94} size={52} />
+
+        {/* Match info */}
+        <div className="px-5 pt-4 pb-2">
+          <div className="font-display text-base font-semibold text-white leading-tight">FIFA World Cup 2026 Final</div>
+          <div className="text-[11px] text-white/30 font-mono mt-0.5">MetLife Stadium · New York, NY · Jul 19, 2026</div>
+        </div>
+
+        {/* Chart */}
+        <div className="px-2 pt-2 pb-1" style={{ height: 160 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={PRICE_HISTORY} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "monospace" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "monospace" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
+              <Line
+                type="monotone"
+                dataKey="sg"
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="4 3"
+              />
+              <Line
+                type="monotone"
+                dataKey="tm"
+                stroke="#22c55e"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 3, fill: "#22c55e", strokeWidth: 0 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Legend + metrics */}
+        <div className="px-5 pb-2 flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-px bg-ghost-green" />
+            <span className="text-[10px] font-mono text-white/30">Ticketmaster</span>
           </div>
-          <div className="grid grid-cols-3 gap-px bg-white/5 rounded overflow-hidden mb-4">
-            <div className="bg-[#111] p-3">
-              <div className="text-xs text-white/30 mb-1.5 font-mono">CURRENT</div>
-              <div className="text-lg font-display font-bold text-white">$1,200</div>
-            </div>
-            <div className="bg-[#111] p-3">
-              <div className="text-xs text-white/30 mb-1.5 font-mono">MARKET</div>
-              <div className="text-lg font-display font-bold text-white/50">$1,900</div>
-            </div>
-            <div className="bg-[#111] p-3">
-              <div className="text-xs text-white/30 mb-1.5 font-mono">EDGE</div>
-              <div className="text-lg font-display font-bold text-ghost-green">−37%</div>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-px bg-white/25" style={{ borderTop: "1px dashed rgba(255,255,255,0.25)" }} />
+            <span className="text-[10px] font-mono text-white/30">SeatGeek</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-white/25 font-mono">Category 1 · 3 available</span>
-            <div className="h-7 px-3 bg-white text-black text-xs font-semibold rounded flex items-center gap-1">
-              View Deal <ArrowRight className="w-3 h-3" />
-            </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-px mx-5 mb-5 mt-2 bg-white/5 rounded-lg overflow-hidden">
+          <div className="bg-[#111]/80 px-3 py-3">
+            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">Best Price</div>
+            <div className="font-display text-base font-bold text-white">${latest.tm.toLocaleString()}</div>
+            <div className="text-[9px] text-white/20 font-mono mt-0.5">Ticketmaster</div>
+          </div>
+          <div className="bg-[#111]/80 px-3 py-3">
+            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">7-Day Drop</div>
+            <div className="font-display text-base font-bold text-ghost-green">−{tmDrop}%</div>
+            <div className="text-[9px] text-white/20 font-mono mt-0.5">on cheapest market</div>
+          </div>
+          <div className="bg-[#111]/80 px-3 py-3">
+            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">Spread</div>
+            <div className="font-display text-base font-bold text-ghost-amber">${spread.toLocaleString()}</div>
+            <div className="text-[9px] text-white/20 font-mono mt-0.5">TM vs SeatGeek</div>
           </div>
         </div>
       </div>
       {/* Ghost cards behind */}
-      <div className="absolute -bottom-3 -right-3 -z-10 w-full h-full glass-card rounded-lg border border-white/4 opacity-50" />
-      <div className="absolute -bottom-6 -right-6 -z-20 w-full h-full glass-card rounded-lg border border-white/2 opacity-25" />
+      <div className="absolute -bottom-3 -right-3 -z-10 w-full h-full glass-card rounded-xl border border-white/4 opacity-50" />
+      <div className="absolute -bottom-6 -right-6 -z-20 w-full h-full glass-card rounded-xl border border-white/2 opacity-25" />
     </div>
   );
 }
