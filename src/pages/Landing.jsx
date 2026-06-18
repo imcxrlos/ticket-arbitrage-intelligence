@@ -106,6 +106,24 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* Independence banner */}
+      <div className="border-b border-white/[0.04]" style={{ background: "rgba(255,255,255,0.015)" }}>
+        <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-center gap-6 flex-wrap">
+          {[
+            { symbol: "∅", text: "No affiliate links" },
+            { symbol: "∅", text: "No referral deals" },
+            { symbol: "∅", text: "No sponsored listings" },
+            { symbol: "◆", text: "100% independent price intelligence" },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className={`text-[9px] font-mono ${item.symbol === "◆" ? "text-ghost-green" : "text-white/20"}`}>{item.symbol}</span>
+              <span className={`text-[10px] font-mono tracking-wide ${item.symbol === "◆" ? "text-white/50" : "text-white/25"}`}>{item.text}</span>
+              {i < 3 && <span className="text-white/10 ml-4 font-mono text-xs hidden sm:inline">·</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Hero */}
       <section className="min-h-screen flex flex-col justify-center pt-28 pb-20 px-6">
         <div className="max-w-7xl mx-auto w-full">
@@ -247,50 +265,6 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* No affiliates */}
-      <section className="py-24 px-6 border-t border-white/5">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="grid lg:grid-cols-2 gap-16 items-center"
-          >
-            <div>
-              <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-3">No Agenda</p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight mb-5">
-                No affiliates.<br />No commissions.<br />No conflict.
-              </h2>
-              <p className="text-white/40 leading-relaxed text-sm max-w-md">
-                Ghost doesn't earn a cut from any ticket platform. We don't have referral deals, sponsored listings, or financial incentives to push you toward any particular marketplace.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-0.5">
-              {[
-                { label: "Pure signal", desc: "Every opportunity is ranked on price data alone — not who's paying us." },
-                { label: "For the game", desc: "Built by fans who believe great seats shouldn't require a broker relationship." },
-                { label: "You choose where to buy", desc: "We surface the edge. The transaction is entirely yours." },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="glass-card px-6 py-5 flex items-start gap-4 group hover:border-white/10 transition-all"
-                >
-                  <div className="w-1 h-1 rounded-full bg-white/20 mt-2 shrink-0 group-hover:bg-white/50 transition-colors" />
-                  <div>
-                    <div className="font-display text-sm font-semibold text-white mb-1">{item.label}</div>
-                    <div className="text-xs text-white/35 leading-relaxed">{item.desc}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </section>
 
