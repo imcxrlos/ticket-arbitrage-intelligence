@@ -5,6 +5,8 @@ import { base44 } from "@/api/base44Client";
 
 function MatchCard({ game }) {
   const isLive = game.status === "live";
+  const isHalfTime = game.status === "halftime";
+  const isActive = isLive || isHalfTime;
   const isFinished = game.status === "finished";
   const hasScore = game.home_score !== null && game.away_score !== null;
 
@@ -12,15 +14,18 @@ function MatchCard({ game }) {
     ? `Group ${game.group} · MD${game.matchday}`
     : (game.type || "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-  const timeDisplay = isLive && game.time_elapsed ? `${game.time_elapsed}'` : isFinished ? "FT" : game.local_date?.split(" ")[1] || "";
+  const timeDisplay = isLive && game.time_elapsed ? `${game.time_elapsed}'`
+    : isHalfTime ? "HT"
+    : isFinished ? "FT"
+    : game.local_date?.split(" ")[1] || "";
 
   return (
     <div className={`relative rounded-xl overflow-hidden transition-all ${
-      isLive
+      isActive
         ? "bg-gradient-to-br from-[#0f1f0f] to-[#0a0a0a] border border-[hsl(var(--ghost-green))/20]"
         : "bg-[#0f0f0f] border border-white/[0.04]"
     }`}>
-      {isLive && (
+      {isActive && (
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--ghost-green))/40] to-transparent" />
       )}
 
@@ -33,6 +38,11 @@ function MatchCard({ game }) {
               <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-green))] pulse-dot" />
               <span className="text-[10px] font-mono text-[hsl(var(--ghost-green))] font-medium">{timeDisplay}</span>
             </div>
+          ) : isHalfTime ? (
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-amber))] pulse-dot" />
+              <span className="text-[10px] font-mono text-[hsl(var(--ghost-amber))] font-medium">HT</span>
+            </div>
           ) : (
             <span className="text-[9px] font-mono text-white/25">{timeDisplay}</span>
           )}
@@ -42,7 +52,7 @@ function MatchCard({ game }) {
         <div className="flex items-center gap-2">
           {/* Home */}
           <div className="flex-1 min-w-0">
-            <div className={`text-sm font-display font-semibold truncate ${isLive ? "text-white" : "text-white/70"}`}>
+            <div className={`text-sm font-display font-semibold truncate ${isActive ? "text-white" : "text-white/70"}`}>
               {game.home}
             </div>
             {game.home_scorers?.length > 0 && (
@@ -57,11 +67,11 @@ function MatchCard({ game }) {
             {hasScore ? (
               <>
                 <span className={`text-xl font-display font-bold tabular-nums leading-none ${
-                  isLive ? "text-[hsl(var(--ghost-green))]" : "text-white"
+                  isLive ? "text-[hsl(var(--ghost-green))]" : isHalfTime ? "text-[hsl(var(--ghost-amber))]" : "text-white"
                 }`}>{game.home_score}</span>
                 <span className="text-white/15 text-base">–</span>
                 <span className={`text-xl font-display font-bold tabular-nums leading-none ${
-                  isLive ? "text-[hsl(var(--ghost-green))]" : "text-white"
+                  isLive ? "text-[hsl(var(--ghost-green))]" : isHalfTime ? "text-[hsl(var(--ghost-amber))]" : "text-white"
                 }`}>{game.away_score}</span>
               </>
             ) : (
@@ -71,7 +81,7 @@ function MatchCard({ game }) {
 
           {/* Away */}
           <div className="flex-1 min-w-0 text-right">
-            <div className={`text-sm font-display font-semibold truncate ${isLive ? "text-white" : "text-white/70"}`}>
+            <div className={`text-sm font-display font-semibold truncate ${isActive ? "text-white" : "text-white/70"}`}>
               {game.away}
             </div>
             {game.away_scorers?.length > 0 && (

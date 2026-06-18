@@ -22,12 +22,13 @@ Deno.serve(async (req) => {
       matchday: g.matchday,
       type: g.type,
       local_date: g.local_date,
-      // Normalize status: "live" | "finished" | "upcoming"
-      // A game is live ONLY if finished != TRUE and time_elapsed is a numeric minute string
+      // Normalize status: "live" | "halftime" | "finished" | "upcoming"
       status: g.finished === "TRUE" ? "finished"
+        : (g.time_elapsed === "HT" || g.time_elapsed === "Half Time") ? "halftime"
         : (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? "live"
         : "upcoming",
-      time_elapsed: (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? g.time_elapsed : null,
+      time_elapsed: (g.time_elapsed === "HT" || g.time_elapsed === "Half Time") ? "HT"
+        : (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? g.time_elapsed : null,
     }));
 
     return Response.json({ games: clean });
