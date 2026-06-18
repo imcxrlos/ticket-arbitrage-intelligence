@@ -159,7 +159,7 @@ export default function Landing() {
                   FIFA World Cup 2026 Ticket Arbitrage Bot
                 </p>
                 <p className="text-white/30 text-sm max-w-md leading-relaxed">
-                  Ghost scans the secondary ticket market and surfaces opportunities where tickets are priced below fair market value — before the market corrects.
+                  Ghost scans the secondary ticket market in real time and surfaces opportunities where tickets are priced below fair market value — before the market corrects.
                 </p>
               </motion.div>
 
