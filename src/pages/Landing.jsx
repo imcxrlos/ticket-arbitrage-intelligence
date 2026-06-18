@@ -308,6 +308,136 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Roadmap */}
+      <section className="py-24 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            className="mb-16"
+          >
+            <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-3">Roadmap</p>
+            <h2 className="font-display text-4xl font-bold text-white">Where Ghost is going.</h2>
+          </motion.div>
+
+          <div className="relative">
+            {/* Connector line */}
+            <div className="absolute left-[18px] top-0 bottom-0 w-px bg-gradient-to-b from-white/10 via-white/5 to-transparent hidden md:block" />
+
+            <div className="space-y-0">
+              {[
+                {
+                  phase: "Phase 1",
+                  status: "live",
+                  label: "Open Beta",
+                  title: "Free for everyone. Always.",
+                  desc: "Ghost launches in open beta — no paywalls, no waitlists. Every feature is free. We want the community to use it, break it, and tell us what to fix.",
+                  tag: "Now",
+                },
+                {
+                  phase: "Phase 2",
+                  status: "upcoming",
+                  label: "Algorithm Refinement",
+                  title: "Smarter signals, more markets.",
+                  desc: "We expand platform coverage, improve arbitrage scoring accuracy, and add demand-tier forecasting. The scanner becomes genuinely predictive, not just reactive.",
+                  tag: "Q3 2026",
+                },
+                {
+                  phase: "Phase 3",
+                  status: "upcoming",
+                  label: "Coin Launch",
+                  title: "Community funds the mission.",
+                  desc: "A token launch via pump.fun to fund infrastructure, data partnerships, and a full-time dev team. Token holders get early access to new features and governance input.",
+                  tag: "Q4 2026",
+                  highlight: true,
+                },
+                {
+                  phase: "Phase 4",
+                  status: "future",
+                  label: "Pro Intelligence Layer",
+                  title: "Institutional-grade tooling. Still free.",
+                  desc: "AI-driven opportunity forecasting, automated alert triggers, portfolio tracking, and multi-event arbitrage routing — all funded by the community, free at the core.",
+                  tag: "2027",
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+                  className="relative flex gap-8 md:gap-12 pb-10 last:pb-0 group"
+                >
+                  {/* Node */}
+                  <div className="relative shrink-0 flex flex-col items-center" style={{ width: 36 }}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border z-10 transition-all ${
+                      item.status === "live"
+                        ? "bg-ghost-green/10 border-ghost-green/40 group-hover:bg-ghost-green/20"
+                        : item.highlight
+                        ? "bg-white/[0.04] border-white/20 group-hover:border-white/30"
+                        : "bg-white/[0.03] border-white/8 group-hover:border-white/14"
+                    }`}>
+                      {item.status === "live" ? (
+                        <div className="w-2 h-2 rounded-full bg-ghost-green pulse-dot" />
+                      ) : (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className={`flex-1 rounded-xl p-5 mb-2 transition-all ${
+                    item.highlight
+                      ? "border border-white/12 group-hover:border-white/20"
+                      : "border border-white/[0.05] group-hover:border-white/10"
+                  }`}
+                    style={{
+                      background: item.highlight
+                        ? "rgba(255,255,255,0.04)"
+                        : item.status === "live"
+                        ? "rgba(34,197,94,0.03)"
+                        : "rgba(255,255,255,0.02)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[9px] font-mono text-white/25 uppercase tracking-widest">{item.phase}</span>
+                        <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                          item.status === "live"
+                            ? "bg-ghost-green/10 text-ghost-green border border-ghost-green/20"
+                            : item.highlight
+                            ? "bg-white/6 text-white/50 border border-white/12"
+                            : "bg-white/[0.03] text-white/20 border border-white/6"
+                        }`}>
+                          {item.label}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-white/20 shrink-0">{item.tag}</span>
+                    </div>
+                    <div className="font-display text-base font-semibold text-white mb-2">{item.title}</div>
+                    <div className="text-sm text-white/40 leading-relaxed">{item.desc}</div>
+                    {item.highlight && (
+                      <a
+                        href="https://pump.fun"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-4 text-[11px] font-mono text-white/40 hover:text-white/70 transition-colors"
+                      >
+                        <span className="w-1 h-1 rounded-full bg-ghost-green pulse-dot" />
+                        pump.fun
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-32 px-6 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
