@@ -326,92 +326,120 @@ export default function Landing() {
 
       {/* ── Roadmap ── */}
       <section className="py-32 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <div className="max-w-5xl mx-auto">
-          <motion.div {...fadeUpView()} className="mb-20">
+        <div className="max-w-7xl mx-auto">
+          <motion.div {...fadeUpView()} className="mb-20 text-center">
             <p className="text-[11px] text-white/25 font-mono tracking-[0.22em] uppercase mb-4">Roadmap</p>
             <h2 className="font-display text-[clamp(2rem,5vw,3.5rem)] font-bold text-white leading-tight tracking-tight">Where Ghost is going.</h2>
+            <p className="text-[14px] text-white/30 mt-4 max-w-lg mx-auto leading-relaxed">An open, community-funded project. Free at the core — forever.</p>
           </motion.div>
 
-          <div className="relative">
-            {/* Vertical thread */}
-            <div className="absolute left-5 top-5 bottom-5 w-px hidden md:block"
-              style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)" }} />
+          {/* Cards grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {ROADMAP.map((item, i) => (
+              <motion.div
+                key={i}
+                {...fadeUpView(i * 0.1)}
+                className="relative group flex flex-col rounded-2xl overflow-hidden cursor-default"
+                style={{
+                  background: item.status === "live"
+                    ? "linear-gradient(145deg, rgba(34,197,94,0.06) 0%, rgba(34,197,94,0.02) 100%)"
+                    : item.highlight
+                    ? "linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)"
+                    : "rgba(255,255,255,0.02)",
+                  border: item.status === "live"
+                    ? "1px solid rgba(34,197,94,0.2)"
+                    : item.highlight
+                    ? "1px solid rgba(255,255,255,0.1)"
+                    : "1px solid rgba(255,255,255,0.05)",
+                }}
+                whileHover={{
+                  y: -4,
+                  transition: { duration: 0.25, ease: "easeOut" }
+                }}
+              >
+                {/* Top accent bar */}
+                <div className="h-px w-full" style={{
+                  background: item.status === "live"
+                    ? "linear-gradient(90deg, transparent, rgba(34,197,94,0.6), transparent)"
+                    : item.highlight
+                    ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)"
+                    : "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)"
+                }} />
 
-            <div className="space-y-4">
-              {ROADMAP.map((item, i) => (
-                <motion.div
-                  key={i}
-                  {...fadeUpView(i * 0.1)}
-                  className="relative flex gap-10"
-                >
-                  {/* Node */}
-                  <div className="shrink-0 w-10 flex justify-center pt-[22px]">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border z-10 transition-all duration-300 ${
-                      item.status === "live"
-                        ? "border-ghost-green/40"
-                        : item.highlight
-                        ? "border-white/20"
-                        : "border-white/8"
-                    }`} style={{
-                      background: item.status === "live" ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)"
+                {/* Glow */}
+                {(item.status === "live" || item.highlight) && (
+                  <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"
+                    style={{
+                      background: item.status === "live"
+                        ? "radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 60%)"
+                        : "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 60%)"
+                    }} />
+                )}
+
+                <div className="flex flex-col flex-1 p-6">
+                  {/* Phase + Status row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-[10px] font-mono tracking-[0.18em] uppercase" style={{ color: "rgba(255,255,255,0.2)" }}>{item.phase}</span>
+                    <span className="text-[9px] font-mono px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider" style={{
+                      background: item.status === "live" ? "rgba(34,197,94,0.12)" : item.highlight ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)",
+                      border: item.status === "live" ? "1px solid rgba(34,197,94,0.3)" : item.highlight ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.07)",
+                      color: item.status === "live" ? "#22c55e" : item.highlight ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.22)",
                     }}>
-                      {item.status === "live"
-                        ? <div className="w-2.5 h-2.5 rounded-full bg-ghost-green pulse-dot" />
-                        : <div className="w-1.5 h-1.5 rounded-full" style={{ background: item.highlight ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.15)" }} />
-                      }
-                    </div>
+                      {item.status === "live" ? "● Live" : item.status === "upcoming" ? "◎ Soon" : "○ Future"}
+                    </span>
                   </div>
 
-                  {/* Card */}
-                  <motion.div
-                    className="flex-1 rounded-2xl p-7 mb-1 transition-all duration-300"
-                    style={{
-                      background: item.highlight ? "rgba(255,255,255,0.04)" : item.status === "live" ? "rgba(34,197,94,0.03)" : "rgba(255,255,255,0.02)",
-                      border: item.highlight ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.05)",
-                    }}
-                    whileHover={{
-                      borderColor: item.highlight ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.1)",
-                      background: item.highlight ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.03)",
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">{item.phase}</span>
-                        <span className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-medium ${
-                          item.status === "live"
-                            ? "text-ghost-green"
-                            : item.highlight ? "text-white/50" : "text-white/20"
-                        }`} style={{
-                          background: item.status === "live" ? "rgba(34,197,94,0.1)" : item.highlight ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-                          border: item.status === "live" ? "1px solid rgba(34,197,94,0.25)" : item.highlight ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.06)",
-                        }}>
-                          {item.label}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-mono text-white/18 shrink-0 pt-0.5">{item.tag}</span>
-                    </div>
-                    <div className="font-display text-[18px] font-bold text-white mb-2.5 tracking-tight leading-snug">{item.title}</div>
-                    <div className="text-[13px] text-white/40 leading-relaxed">{item.desc}</div>
-                    {item.highlight && (
+                  {/* Big phase number */}
+                  <div className="font-mono font-bold leading-none mb-5 select-none transition-colors duration-300"
+                    style={{ fontSize: 64, color: item.status === "live" ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.05)" }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+
+                  {/* Label pill */}
+                  <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: item.status === "live" ? "rgba(34,197,94,0.7)" : "rgba(255,255,255,0.25)" }}>
+                    {item.label}
+                  </div>
+
+                  {/* Title */}
+                  <div className="font-display text-[17px] font-bold text-white leading-snug tracking-tight mb-3">{item.title}</div>
+
+                  {/* Desc */}
+                  <div className="text-[13px] leading-relaxed flex-1" style={{ color: "rgba(255,255,255,0.38)" }}>{item.desc}</div>
+
+                  {/* Footer */}
+                  <div className="mt-6 pt-5 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span className="text-[11px] font-mono font-semibold" style={{ color: item.status === "live" ? "rgba(34,197,94,0.8)" : "rgba(255,255,255,0.2)" }}>{item.tag}</span>
+                    {item.highlight ? (
                       <a
                         href="https://pump.fun"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-5 text-[12px] font-mono transition-colors duration-200"
-                        style={{ color: "rgba(255,255,255,0.35)" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.65)"}
-                        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.35)"}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-mono transition-colors duration-200"
+                        style={{ color: "rgba(255,255,255,0.3)" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
+                        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
+                        onClick={e => e.stopPropagation()}
                       >
-                        <span className="w-1 h-1 rounded-full bg-ghost-green pulse-dot" />
-                        pump.fun
-                        <ExternalLink className="w-3 h-3" />
+                        pump.fun <ExternalLink className="w-2.5 h-2.5" />
                       </a>
+                    ) : (
+                      item.status === "live" && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
+                          <span className="text-[10px] font-mono text-ghost-green">Active</span>
+                        </div>
+                      )
                     )}
-                  </motion.div>
-                </motion.div>
-              ))}
-            </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
+
+          {/* Bottom note */}
+          <motion.p {...fadeUpView(0.4)} className="text-center text-[12px] font-mono mt-10" style={{ color: "rgba(255,255,255,0.18)" }}>
+            The tool stays free at every phase. The token funds the infrastructure — not access.
+          </motion.p>
         </div>
       </section>
 
