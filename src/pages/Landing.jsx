@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 const TICKER_ITEMS = [
   { match: "Argentina vs Brazil", score: 94, discount: "41%" },
@@ -345,132 +345,188 @@ const PRICE_HISTORY = [
 ];
 
 const PLATFORMS = [
-  { key: "tm",   label: "Ticketmaster", color: "#22c55e",           dash: false },
-  { key: "sg",   label: "SeatGeek",     color: "rgba(255,255,255,0.45)", dash: false },
-  { key: "stub", label: "StubHub",      color: "#f59e0b",           dash: true },
-  { key: "vvd",  label: "Vivid Seats",  color: "rgba(255,255,255,0.2)", dash: true },
+  { key: "tm",   label: "Ticketmaster", color: "#22c55e" },
+  { key: "sg",   label: "SeatGeek",     color: "#60a5fa" },
+  { key: "stub", label: "StubHub",      color: "#f59e0b" },
+  { key: "vvd",  label: "Vivid Seats",  color: "rgba(255,255,255,0.35)" },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const sorted = [...payload].sort((a, b) => a.value - b.value);
   return (
-    <div style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)" }}
-      className="rounded-lg px-3 py-2.5 shadow-2xl backdrop-blur-xl">
-      <p className="text-[9px] font-mono text-white/25 mb-2 uppercase tracking-widest">{label}</p>
+    <div style={{ background: "rgba(8,8,8,0.97)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 24px 48px rgba(0,0,0,0.6)" }}
+      className="rounded-xl px-3.5 py-3 backdrop-blur-2xl min-w-[140px]">
+      <p className="text-[9px] font-mono text-white/20 mb-2.5 uppercase tracking-widest">{label}</p>
       {sorted.map((p) => {
         const platform = PLATFORMS.find(pl => pl.key === p.dataKey);
+        const isLowest = p.value === sorted[0].value;
         return (
-          <div key={p.dataKey} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
+          <div key={p.dataKey} className="flex items-center justify-between gap-5 mb-1.5 last:mb-0">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: platform?.color }} />
-              <span className="text-[10px] font-mono text-white/40">{platform?.label}</span>
+              <span className="text-[10px] font-mono text-white/35">{platform?.label}</span>
             </div>
-            <span className="text-[10px] font-mono font-semibold text-white">${p.value.toLocaleString()}</span>
+            <span className={`text-[11px] font-mono font-bold ${isLowest ? "text-ghost-green" : "text-white/60"}`}>${p.value.toLocaleString()}</span>
           </div>
         );
       })}
+      <div className="mt-2.5 pt-2.5 border-t border-white/[0.06]">
+        <div className="flex justify-between items-center">
+          <span className="text-[9px] font-mono text-white/20">Spread</span>
+          <span className="text-[10px] font-mono text-ghost-amber font-semibold">
+            ${(sorted[sorted.length-1].value - sorted[0].value).toLocaleString()}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
 
 function PreviewCard() {
+  const [activePlatforms, setActivePlatforms] = useState(new Set(['tm', 'sg', 'stub', 'vvd']));
   const latest = PRICE_HISTORY[PRICE_HISTORY.length - 1];
   const first = PRICE_HISTORY[0];
   const tmDrop = Math.round(((first.tm - latest.tm) / first.tm) * 100);
   const maxSpread = latest.vvd - latest.tm;
-  const pct = Math.round(((latest.vvd - latest.tm) / latest.vvd) * 100);
+  const spreadPct = Math.round(((latest.vvd - latest.tm) / latest.vvd) * 100);
+
+  const togglePlatform = (key) => {
+    setActivePlatforms(prev => {
+      const next = new Set(prev);
+      if (next.has(key) && next.size > 1) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   return (
-    <div className="relative">
-      <div className="rounded-xl overflow-hidden shadow-2xl" style={{ background: "rgba(14,14,14,0.95)", border: "1px solid rgba(255,255,255,0.07)" }}>
+    <div className="relative select-none">
+      {/* Glow behind card */}
+      <div className="absolute inset-0 -z-10 blur-3xl opacity-20 rounded-3xl"
+        style={{ background: "radial-gradient(ellipse at 60% 40%, #22c55e 0%, transparent 60%)" }} />
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
+      <div className="rounded-2xl overflow-hidden"
+        style={{ background: "rgba(11,11,11,0.96)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.04) inset" }}>
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/[0.04]">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-            <span className="text-[9px] text-white/35 font-mono uppercase tracking-widest">Multi-Market Price Intelligence</span>
+            <span className="text-[9px] text-white/30 font-mono uppercase tracking-[0.15em]">Price Intelligence · Live</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1 h-1 rounded-full bg-white/20" />
-            <span className="text-[9px] font-mono text-white/20">7d · 4 platforms</span>
+          <div className="flex items-center gap-1 bg-white/[0.04] rounded-md px-2 py-1">
+            <span className="text-[9px] font-mono text-white/20">7D</span>
+            <span className="text-[9px] font-mono text-white/10 mx-1">·</span>
+            <span className="text-[9px] font-mono text-white/40 font-semibold">4 Markets</span>
           </div>
         </div>
 
-        {/* Match */}
-        <div className="px-5 pt-3.5 pb-0 flex items-start justify-between">
-          <div>
-            <div className="font-display text-sm font-semibold text-white leading-tight">FIFA World Cup 2026 Final</div>
-            <div className="text-[10px] text-white/25 font-mono mt-0.5">MetLife Stadium · New York · Jul 19, 2026</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-0.5">Max spread</div>
-            <div className="font-display text-sm font-bold text-ghost-amber">−{pct}%</div>
+        {/* Match info + big price */}
+        <div className="px-5 pt-4 pb-2">
+          <div className="text-[10px] font-mono text-white/25 mb-1 tracking-wide">FIFA World Cup 2026 Final</div>
+          <div className="flex items-end justify-between gap-2">
+            <div>
+              <div className="font-display text-3xl font-bold text-white tracking-tight leading-none">
+                ${latest.tm.toLocaleString()}
+              </div>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <div className="flex items-center gap-1 bg-ghost-green/10 border border-ghost-green/20 rounded-full px-2 py-0.5">
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                    <path d="M4 7V1M1.5 3.5L4 1L6.5 3.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-[9px] font-mono text-ghost-green font-semibold">Best price</span>
+                </div>
+                <span className="text-[9px] font-mono text-white/20">Ticketmaster</span>
+              </div>
+            </div>
+            <div className="text-right pb-0.5">
+              <div className="text-[9px] font-mono text-white/20 mb-0.5">Arb spread</div>
+              <div className="font-display text-xl font-bold text-ghost-amber">−{spreadPct}%</div>
+              <div className="text-[9px] font-mono text-white/20">${maxSpread.toLocaleString()} gap</div>
+            </div>
           </div>
         </div>
 
         {/* Chart */}
-        <div style={{ height: 148 }} className="px-1 pt-3 pb-0">
+        <div style={{ height: 140 }} className="px-1 pt-1">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={PRICE_HISTORY} margin={{ top: 2, right: 10, left: -22, bottom: 0 }}>
-              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
+            <AreaChart data={PRICE_HISTORY} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+              <defs>
+                {PLATFORMS.map(p => (
+                  <linearGradient key={p.key} id={`grad-${p.key}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={p.color} stopOpacity={p.key === 'tm' ? 0.18 : 0.06} />
+                    <stop offset="100%" stopColor={p.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.025)" />
               <XAxis
                 dataKey="day"
-                tick={{ fill: "rgba(255,255,255,0.18)", fontSize: 8, fontFamily: "monospace" }}
+                tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontFamily: "monospace" }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fill: "rgba(255,255,255,0.18)", fontSize: 8, fontFamily: "monospace" }}
+                tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontFamily: "monospace" }}
                 axisLine={false} tickLine={false}
                 tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
                 domain={['auto', 'auto']}
+                width={42}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.05)", strokeWidth: 1 }} />
-              {PLATFORMS.map((p) => (
-                <Line
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1, strokeDasharray: "3 3" }} />
+              {PLATFORMS.map((p) => activePlatforms.has(p.key) && (
+                <Area
                   key={p.key}
                   type="monotone"
                   dataKey={p.key}
                   stroke={p.color}
                   strokeWidth={p.key === "tm" ? 2 : 1.5}
+                  fill={`url(#grad-${p.key})`}
                   dot={false}
-                  strokeDasharray={p.dash ? "3 3" : undefined}
-                  activeDot={p.key === "tm" ? { r: 3, fill: p.color, strokeWidth: 0 } : false}
+                  activeDot={p.key === "tm" ? { r: 3.5, fill: p.color, strokeWidth: 0 } : false}
                 />
               ))}
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legend */}
-        <div className="px-5 pt-2 pb-3 flex items-center gap-4 flex-wrap border-b border-white/[0.05]">
-          {PLATFORMS.map((p) => (
-            <div key={p.key} className="flex items-center gap-1.5">
-              <div className="w-4 h-px" style={{ background: p.dash ? "none" : p.color, borderTop: p.dash ? `1px dashed ${p.color}` : "none" }} />
-              <span className="text-[9px] font-mono text-white/25">{p.label}</span>
-            </div>
-          ))}
+        {/* Platform toggle pills */}
+        <div className="flex items-center gap-1.5 px-4 pt-2 pb-3 flex-wrap">
+          {PLATFORMS.map((p) => {
+            const isActive = activePlatforms.has(p.key);
+            return (
+              <button
+                key={p.key}
+                onClick={() => togglePlatform(p.key)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all text-[9px] font-mono"
+                style={{
+                  background: isActive ? `${p.color}14` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${isActive ? `${p.color}35` : "rgba(255,255,255,0.06)"}`,
+                  color: isActive ? p.color : "rgba(255,255,255,0.2)",
+                }}
+              >
+                <div className="w-1 h-1 rounded-full" style={{ background: isActive ? p.color : "rgba(255,255,255,0.15)" }} />
+                {p.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-px bg-white/[0.04] m-4 rounded-lg overflow-hidden">
+        {/* Stats row */}
+        <div className="grid grid-cols-3 mx-4 mb-4 rounded-xl overflow-hidden border border-white/[0.05]">
           {[
-            { label: "Best Price", value: `$${latest.tm.toLocaleString()}`, sub: "Ticketmaster", color: "text-white" },
-            { label: "7-Day Drop", value: `−${tmDrop}%`, sub: "cheapest market", color: "text-ghost-green" },
-            { label: "Arb Spread", value: `$${maxSpread.toLocaleString()}`, sub: "TM vs Vivid", color: "text-ghost-amber" },
+            { label: "Best Price", value: `$${latest.tm.toLocaleString()}`, sub: "Ticketmaster", accent: "text-white" },
+            { label: "7-Day Drop", value: `−${tmDrop}%`, sub: "cheapest market", accent: "text-ghost-green" },
+            { label: "Arb Spread", value: `$${maxSpread.toLocaleString()}`, sub: "TM vs Vivid", accent: "text-ghost-amber" },
           ].map((s, i) => (
-            <div key={i} className="px-3 py-3" style={{ background: "rgba(10,10,10,0.8)" }}>
-              <div className="text-[8px] text-white/20 font-mono uppercase tracking-widest mb-1">{s.label}</div>
-              <div className={`font-display text-sm font-bold ${s.color}`}>{s.value}</div>
+            <div key={i} className="px-3.5 py-3" style={{ background: i === 1 ? "rgba(34,197,94,0.04)" : "rgba(255,255,255,0.02)", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+              <div className="text-[8px] text-white/20 font-mono uppercase tracking-widest mb-1.5">{s.label}</div>
+              <div className={`font-display text-sm font-bold ${s.accent}`}>{s.value}</div>
               <div className="text-[8px] text-white/15 font-mono mt-0.5">{s.sub}</div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Depth shadows */}
-      <div className="absolute -bottom-2.5 -right-2.5 -z-10 w-full h-full rounded-xl border border-white/[0.04] opacity-60" style={{ background: "rgba(14,14,14,0.6)" }} />
-      <div className="absolute -bottom-5 -right-5 -z-20 w-full h-full rounded-xl border border-white/[0.02] opacity-30" style={{ background: "rgba(14,14,14,0.4)" }} />
     </div>
   );
 }
