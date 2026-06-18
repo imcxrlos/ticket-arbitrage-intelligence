@@ -335,127 +335,142 @@ export default function Landing() {
 }
 
 const PRICE_HISTORY = [
-  { day: "Jun 12", tm: 2180, sg: 2340 },
-  { day: "Jun 13", tm: 2150, sg: 2290 },
-  { day: "Jun 14", tm: 2210, sg: 2380 },
-  { day: "Jun 15", tm: 2080, sg: 2260 },
-  { day: "Jun 16", tm: 1940, sg: 2190 },
-  { day: "Jun 17", tm: 1870, sg: 2140 },
-  { day: "Jun 18", tm: 1760, sg: 2090 },
+  { day: "Jun 12", tm: 2180, sg: 2340, stub: 2510, vvd: 2620 },
+  { day: "Jun 13", tm: 2150, sg: 2290, stub: 2480, vvd: 2590 },
+  { day: "Jun 14", tm: 2210, sg: 2380, stub: 2530, vvd: 2640 },
+  { day: "Jun 15", tm: 2080, sg: 2260, stub: 2400, vvd: 2560 },
+  { day: "Jun 16", tm: 1940, sg: 2190, stub: 2310, vvd: 2490 },
+  { day: "Jun 17", tm: 1870, sg: 2140, stub: 2250, vvd: 2430 },
+  { day: "Jun 18", tm: 1760, sg: 2090, stub: 2180, vvd: 2370 },
+];
+
+const PLATFORMS = [
+  { key: "tm",   label: "Ticketmaster", color: "#22c55e",           dash: false },
+  { key: "sg",   label: "SeatGeek",     color: "rgba(255,255,255,0.45)", dash: false },
+  { key: "stub", label: "StubHub",      color: "#f59e0b",           dash: true },
+  { key: "vvd",  label: "Vivid Seats",  color: "rgba(255,255,255,0.2)", dash: true },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
+  const sorted = [...payload].sort((a, b) => a.value - b.value);
   return (
-    <div className="glass-card border border-white/10 rounded-lg px-3 py-2.5 shadow-2xl">
-      <p className="text-[10px] font-mono text-white/30 mb-1.5 uppercase tracking-widest">{label}</p>
-      {payload.map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-2 text-xs font-mono">
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
-          <span className="text-white/50 capitalize">{p.dataKey === "tm" ? "Ticketmaster" : "SeatGeek"}</span>
-          <span className="text-white font-semibold ml-1">${p.value.toLocaleString()}</span>
-        </div>
-      ))}
+    <div style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)" }}
+      className="rounded-lg px-3 py-2.5 shadow-2xl backdrop-blur-xl">
+      <p className="text-[9px] font-mono text-white/25 mb-2 uppercase tracking-widest">{label}</p>
+      {sorted.map((p) => {
+        const platform = PLATFORMS.find(pl => pl.key === p.dataKey);
+        return (
+          <div key={p.dataKey} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: platform?.color }} />
+              <span className="text-[10px] font-mono text-white/40">{platform?.label}</span>
+            </div>
+            <span className="text-[10px] font-mono font-semibold text-white">${p.value.toLocaleString()}</span>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 function PreviewCard() {
   const latest = PRICE_HISTORY[PRICE_HISTORY.length - 1];
-  const prev = PRICE_HISTORY[0];
-  const tmDrop = Math.round(((prev.tm - latest.tm) / prev.tm) * 100);
-  const spread = latest.sg - latest.tm;
+  const first = PRICE_HISTORY[0];
+  const tmDrop = Math.round(((first.tm - latest.tm) / first.tm) * 100);
+  const maxSpread = latest.vvd - latest.tm;
+  const pct = Math.round(((latest.vvd - latest.tm) / latest.vvd) * 100);
 
   return (
     <div className="relative">
-      <div className="glass-card rounded-xl overflow-hidden border border-white/8 shadow-2xl">
+      <div className="rounded-xl overflow-hidden shadow-2xl" style={{ background: "rgba(14,14,14,0.95)", border: "1px solid rgba(255,255,255,0.07)" }}>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-            <span className="text-[10px] text-white/40 font-mono uppercase tracking-widest">Price Intelligence</span>
+            <span className="text-[9px] text-white/35 font-mono uppercase tracking-widest">Multi-Market Price Intelligence</span>
           </div>
-          <span className="text-[10px] font-mono text-white/20">Last 7 days</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1 h-1 rounded-full bg-white/20" />
+            <span className="text-[9px] font-mono text-white/20">7d · 4 platforms</span>
+          </div>
         </div>
 
-        {/* Match info */}
-        <div className="px-5 pt-4 pb-2">
-          <div className="font-display text-base font-semibold text-white leading-tight">FIFA World Cup 2026 Final</div>
-          <div className="text-[11px] text-white/30 font-mono mt-0.5">MetLife Stadium · New York, NY · Jul 19, 2026</div>
+        {/* Match */}
+        <div className="px-5 pt-3.5 pb-0 flex items-start justify-between">
+          <div>
+            <div className="font-display text-sm font-semibold text-white leading-tight">FIFA World Cup 2026 Final</div>
+            <div className="text-[10px] text-white/25 font-mono mt-0.5">MetLife Stadium · New York · Jul 19, 2026</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-0.5">Max spread</div>
+            <div className="font-display text-sm font-bold text-ghost-amber">−{pct}%</div>
+          </div>
         </div>
 
         {/* Chart */}
-        <div className="px-2 pt-2 pb-1" style={{ height: 160 }}>
+        <div style={{ height: 148 }} className="px-1 pt-3 pb-0">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={PRICE_HISTORY} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
-              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+            <LineChart data={PRICE_HISTORY} margin={{ top: 2, right: 10, left: -22, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
               <XAxis
                 dataKey="day"
-                tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "monospace" }}
-                axisLine={false}
-                tickLine={false}
+                tick={{ fill: "rgba(255,255,255,0.18)", fontSize: 8, fontFamily: "monospace" }}
+                axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "monospace" }}
-                axisLine={false}
-                tickLine={false}
+                tick={{ fill: "rgba(255,255,255,0.18)", fontSize: 8, fontFamily: "monospace" }}
+                axisLine={false} tickLine={false}
                 tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
+                domain={['auto', 'auto']}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
-              <Line
-                type="monotone"
-                dataKey="sg"
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth={1.5}
-                dot={false}
-                strokeDasharray="4 3"
-              />
-              <Line
-                type="monotone"
-                dataKey="tm"
-                stroke="#22c55e"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 3, fill: "#22c55e", strokeWidth: 0 }}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.05)", strokeWidth: 1 }} />
+              {PLATFORMS.map((p) => (
+                <Line
+                  key={p.key}
+                  type="monotone"
+                  dataKey={p.key}
+                  stroke={p.color}
+                  strokeWidth={p.key === "tm" ? 2 : 1.5}
+                  dot={false}
+                  strokeDasharray={p.dash ? "3 3" : undefined}
+                  activeDot={p.key === "tm" ? { r: 3, fill: p.color, strokeWidth: 0 } : false}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legend + metrics */}
-        <div className="px-5 pb-2 flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-px bg-ghost-green" />
-            <span className="text-[10px] font-mono text-white/30">Ticketmaster</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-px bg-white/25" style={{ borderTop: "1px dashed rgba(255,255,255,0.25)" }} />
-            <span className="text-[10px] font-mono text-white/30">SeatGeek</span>
-          </div>
+        {/* Legend */}
+        <div className="px-5 pt-2 pb-3 flex items-center gap-4 flex-wrap border-b border-white/[0.05]">
+          {PLATFORMS.map((p) => (
+            <div key={p.key} className="flex items-center gap-1.5">
+              <div className="w-4 h-px" style={{ background: p.dash ? "none" : p.color, borderTop: p.dash ? `1px dashed ${p.color}` : "none" }} />
+              <span className="text-[9px] font-mono text-white/25">{p.label}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-px mx-5 mb-5 mt-2 bg-white/5 rounded-lg overflow-hidden">
-          <div className="bg-[#111]/80 px-3 py-3">
-            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">Best Price</div>
-            <div className="font-display text-base font-bold text-white">${latest.tm.toLocaleString()}</div>
-            <div className="text-[9px] text-white/20 font-mono mt-0.5">Ticketmaster</div>
-          </div>
-          <div className="bg-[#111]/80 px-3 py-3">
-            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">7-Day Drop</div>
-            <div className="font-display text-base font-bold text-ghost-green">−{tmDrop}%</div>
-            <div className="text-[9px] text-white/20 font-mono mt-0.5">on cheapest market</div>
-          </div>
-          <div className="bg-[#111]/80 px-3 py-3">
-            <div className="text-[9px] text-white/25 font-mono uppercase tracking-widest mb-1">Spread</div>
-            <div className="font-display text-base font-bold text-ghost-amber">${spread.toLocaleString()}</div>
-            <div className="text-[9px] text-white/20 font-mono mt-0.5">TM vs SeatGeek</div>
-          </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-px bg-white/[0.04] m-4 rounded-lg overflow-hidden">
+          {[
+            { label: "Best Price", value: `$${latest.tm.toLocaleString()}`, sub: "Ticketmaster", color: "text-white" },
+            { label: "7-Day Drop", value: `−${tmDrop}%`, sub: "cheapest market", color: "text-ghost-green" },
+            { label: "Arb Spread", value: `$${maxSpread.toLocaleString()}`, sub: "TM vs Vivid", color: "text-ghost-amber" },
+          ].map((s, i) => (
+            <div key={i} className="px-3 py-3" style={{ background: "rgba(10,10,10,0.8)" }}>
+              <div className="text-[8px] text-white/20 font-mono uppercase tracking-widest mb-1">{s.label}</div>
+              <div className={`font-display text-sm font-bold ${s.color}`}>{s.value}</div>
+              <div className="text-[8px] text-white/15 font-mono mt-0.5">{s.sub}</div>
+            </div>
+          ))}
         </div>
       </div>
-      {/* Ghost cards behind */}
-      <div className="absolute -bottom-3 -right-3 -z-10 w-full h-full glass-card rounded-xl border border-white/4 opacity-50" />
-      <div className="absolute -bottom-6 -right-6 -z-20 w-full h-full glass-card rounded-xl border border-white/2 opacity-25" />
+
+      {/* Depth shadows */}
+      <div className="absolute -bottom-2.5 -right-2.5 -z-10 w-full h-full rounded-xl border border-white/[0.04] opacity-60" style={{ background: "rgba(14,14,14,0.6)" }} />
+      <div className="absolute -bottom-5 -right-5 -z-20 w-full h-full rounded-xl border border-white/[0.02] opacity-30" style={{ background: "rgba(14,14,14,0.4)" }} />
     </div>
   );
 }
