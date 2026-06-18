@@ -110,7 +110,7 @@ export default function Landing() {
       </div>
 
       {/* Independence banner */}
-      <div className="border-b border-white/[0.04]" style={{ background: "rgba(255,255,255,0.015)" }}>
+      <div className="border-b border-white/[0.04] mt-14" style={{ background: "rgba(255,255,255,0.015)" }}>
         <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-center gap-6 flex-wrap">
           {[
             { symbol: "∅", text: "No affiliate links" },
