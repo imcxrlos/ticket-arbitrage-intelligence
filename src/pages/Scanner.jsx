@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, RefreshCw, X, Lock, Zap } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import GhostNav from "@/components/GhostNav";
 import LiveScoresPanel from "@/components/LiveScoresPanel";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -24,7 +24,7 @@ export default function Scanner() {
   const [user, setUser] = useState(null);
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+
   const [savedIds, setSavedIds] = useState(new Set());
   const [selectedOpp, setSelectedOpp] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -66,22 +66,7 @@ export default function Scanner() {
     }
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadOpportunities();
-    setRefreshing(false);
-  };
 
-  const handleSyncLive = async () => {
-    if (!user) { navigate("/login"); return; }
-    setRefreshing(true);
-    try {
-      await base44.functions.invoke('syncOpportunities', {});
-      await loadOpportunities();
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   const handleSave = async (opp) => {
     if (!user) { navigate("/login"); return; }
@@ -137,7 +122,7 @@ export default function Scanner() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-display text-sm font-semibold text-white tracking-wide">Market Scanner</h1>
-              <div className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-ghost-amber" : "bg-ghost-green"} pulse-dot`} />
+              <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
             </div>
             <p className="text-[10px] text-white/25 font-mono">
               {loading ? "Loading..." : `${filtered.length} results`}
@@ -223,27 +208,7 @@ export default function Scanner() {
           {/* Divider */}
           <div className="border-t border-white/[0.05]" />
 
-          {/* Actions */}
-          <div className="space-y-2">
-            {user && (
-              <button
-                onClick={handleSyncLive}
-                disabled={refreshing}
-                className="w-full h-8 bg-white/6 border border-white/10 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
-              >
-                <Zap className={`w-3 h-3 ${refreshing ? "animate-pulse" : ""}`} />
-                Sync Live Data
-              </button>
-            )}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="w-full h-8 border border-white/8 rounded-lg text-xs text-white/35 hover:text-white/70 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
-            >
-              <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
-          </div>
+
         </aside>
 
         {/* ── MAIN CONTENT ── */}
@@ -261,10 +226,7 @@ export default function Scanner() {
                 <SlidersHorizontal className="w-3 h-3" />
                 Filters
               </button>
-              <button onClick={handleRefresh} disabled={refreshing}
-                className="h-8 w-8 border border-white/10 rounded-lg flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-40">
-                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              </button>
+
             </div>
           </div>
 
