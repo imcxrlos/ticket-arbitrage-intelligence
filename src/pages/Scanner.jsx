@@ -78,10 +78,10 @@ export default function Scanner() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <GhostNav user={user} />
 
-      <div className="pt-20 pb-16 flex h-screen overflow-hidden">
+      <div className="pt-16 pb-4 flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden">
 
         {/* ── LEFT SIDEBAR ── */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-white/[0.05] overflow-y-auto px-5 py-6 gap-5">
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-white/[0.05] overflow-y-auto px-5 py-6 gap-5 lg:h-full">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-display text-sm font-semibold text-white tracking-wide">Market Scanner</h1>
@@ -118,13 +118,38 @@ export default function Scanner() {
         </aside>
 
         {/* ── MAIN CONTENT ── */}
-        <main className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
 
-          {/* Mobile header */}
-          <div className="flex lg:hidden items-center justify-between mb-5">
-            <div>
-              <h1 className="font-display text-xl font-bold text-white">Market Scanner</h1>
-              <p className="text-[10px] text-white/25 font-mono mt-0.5">{loading ? "Loading..." : `${filtered.length} results`}</p>
+          {/* Mobile header + search/sort bar */}
+          <div className="flex lg:hidden flex-col gap-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
+                <h1 className="font-display text-base font-bold text-white">Market Scanner</h1>
+                <span className="text-[10px] text-white/25 font-mono">{loading ? "…" : `${filtered.length}`}</span>
+              </div>
+            </div>
+            {/* Mobile search + sort inline */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Match or city..."
+                  className="w-full h-8 pl-7 pr-3 bg-white/4 border border-white/8 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors"
+                />
+              </div>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="h-8 px-2 bg-white/4 border border-white/8 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer"
+              >
+                <option value="score">Score</option>
+                <option value="discount">Discount</option>
+                <option value="price_asc">$ Low</option>
+                <option value="price_desc">$ High</option>
+              </select>
             </div>
           </div>
 
@@ -133,9 +158,9 @@ export default function Scanner() {
 
           {/* Cards */}
           {loading ? (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white/3 rounded-xl h-52 shimmer border border-white/[0.04]" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white/3 rounded-xl h-40 shimmer border border-white/[0.04]" />
               ))}
             </div>
           ) : opportunities.length === 0 ? (
@@ -159,7 +184,7 @@ export default function Scanner() {
             <>
               {topOpp && (
                 <div
-                  className="bg-white/[0.03] border border-white/8 rounded-xl p-5 mb-6 cursor-pointer hover:border-white/14 transition-all relative overflow-hidden group"
+                  className="hidden sm:block bg-white/[0.03] border border-white/8 rounded-xl p-5 mb-5 cursor-pointer hover:border-white/14 transition-all relative overflow-hidden group"
                   onClick={() => setSelectedOpp(topOpp)}
                 >
                   <div className="absolute top-0 right-0 w-48 h-48 bg-ghost-green/5 rounded-full -translate-y-12 translate-x-12 blur-3xl pointer-events-none" />
@@ -182,7 +207,7 @@ export default function Scanner() {
                 </div>
               )}
 
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {filtered.map((opp, i) => (
                   <OpportunityCard
                     key={opp.id}
