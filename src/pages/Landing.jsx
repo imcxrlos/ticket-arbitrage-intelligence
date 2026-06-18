@@ -109,23 +109,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Independence banner */}
-      <div className="border-b border-white/[0.04] mt-22" style={{ background: "rgba(255,255,255,0.015)" }}>
-        <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-center gap-6 flex-wrap">
-          {[
-            { symbol: "∅", text: "No affiliate links" },
-            { symbol: "∅", text: "No referral deals" },
-            { symbol: "∅", text: "No sponsored listings" },
-            { symbol: "◆", text: "100% independent price intelligence" },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <span className={`text-[9px] font-mono ${item.symbol === "◆" ? "text-ghost-green" : "text-white/20"}`}>{item.symbol}</span>
-              <span className={`text-[10px] font-mono tracking-wide ${item.symbol === "◆" ? "text-white/50" : "text-white/25"}`}>{item.text}</span>
-              {i < 3 && <span className="text-white/10 ml-4 font-mono text-xs hidden sm:inline">·</span>}
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* Hero */}
       <section className="min-h-screen flex flex-col justify-center pt-28 pb-20 px-6">
