@@ -56,8 +56,11 @@ export default function Landing() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setLiveCount(prev => prev + Math.floor(Math.random() * 3));
-    }, 3000);
+      setLiveCount(prev => {
+        if (prev >= 160) return prev;
+        return prev + 1;
+      });
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
