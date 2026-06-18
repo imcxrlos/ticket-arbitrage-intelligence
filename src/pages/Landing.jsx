@@ -515,9 +515,13 @@ export default function Landing() {
         style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
       >
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.25)" }} />
-            <span className="text-[13px] font-display font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>Ghost</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+              <div className="w-2 h-2 rounded-full bg-ghost-green pulse-dot" />
+              <span className="text-[11px] font-mono text-ghost-green font-semibold tracking-wide">All Systems Active</span>
+              <span className="text-[10px] font-mono" style={{ color: "rgba(34,197,94,0.5)" }}>·</span>
+              <span className="text-[10px] font-mono" style={{ color: "rgba(34,197,94,0.6)" }}>99% uptime</span>
+            </div>
           </div>
           <div className="flex items-center gap-6">
             <Link to="/terms" className="text-[12px] font-mono transition-colors duration-200" style={{ color: "rgba(255,255,255,0.2)" }}
