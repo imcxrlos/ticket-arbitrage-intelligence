@@ -214,6 +214,28 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Independence statement */}
+      <section className="py-12 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-6 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              <div className="text-[9px] font-mono text-white/25 uppercase tracking-widest mb-2">Independent Tool</div>
+              <p className="text-white/70 text-sm font-mono leading-relaxed max-w-xl">
+                Ghost is a fully independent arbitrage scanner. We use <span className="text-white">no affiliate links</span>, earn <span className="text-white">zero commission</span> from any ticket platform, and have <span className="text-white">no referral deals</span>. Every ranking is based purely on price data.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 shrink-0">
+              {["No affiliate links", "No referral commissions", "No sponsored results"].map((item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-ghost-green" />
+                  <span className="text-[11px] font-mono text-white/40">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
