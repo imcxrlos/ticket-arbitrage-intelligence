@@ -1,150 +1,155 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
- * Ghost — syncOpportunities
+ * Ghost — syncOpportunities (Market Intelligence Edition)
  *
- * 1. Call TicketsData /events with StubHub WC2026 performer URL → all match event URLs (1 credit)
- * 2. For each match, fetch StubHub + SeatGeek + VividSeats in parallel via /fetch (3 credits each)
- * 3. Compute real arbitrage spread across platforms, score, save
+ * Uses TicketsData /match endpoint — 1 credit per event, fetches ALL platforms
+ * simultaneously and returns full cross-market arbitrage intelligence.
+ *
+ * 3 reports used for the 3 highest-value WC2026 matches:
+ *   1. Final — MetLife Stadium, East Rutherford NJ (Jul 19)
+ *   2. Semi-Final 1 — AT&T Stadium, Arlington TX (Jul 14)
+ *   3. Semi-Final 2 — Mercedes-Benz Stadium, Atlanta GA (Jul 15)
  */
 
 const TD_BASE = 'https://ticketsdata.com';
-const WC2026_STUBHUB_PERFORMER = 'https://www.stubhub.com/fifa-world-cup-tickets/performer/4750453/';
 
-// Platforms to fetch for each match — real arbitrage needs 2+ markets
-const PLATFORMS = ['stubhub', 'seatgeek', 'vividseats'];
+// 3 premium WC2026 matches with confirmed StubHub event URLs
+const PREMIUM_MATCHES = [
+  {
+    stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
+    match: 'World Cup Final',
+    round: 'Final',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-07-19T15:00:00',
+  },
+  {
+    stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
+    match: 'World Cup Semi-Final 1',
+    round: 'Semi-Final',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-07-14T14:00:00',
+  },
+  {
+    stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
+    match: 'World Cup Semi-Final 2',
+    round: 'Semi-Final',
+    stadium: 'Mercedes-Benz Stadium',
+    city: 'Atlanta, GA',
+    match_date: '2026-07-15T15:00:00',
+  },
+];
 
-async function tdEvents(username, password) {
-  const url = new URL(`${TD_BASE}/events`);
+async function tdMatch(username, password, eventUrl) {
+  const url = new URL(`${TD_BASE}/match`);
   url.searchParams.set('username', username);
   url.searchParams.set('password', password);
-  url.searchParams.set('platform', 'stubhub');
-  url.searchParams.set('performer_url', WC2026_STUBHUB_PERFORMER);
+  url.searchParams.set('event_url', eventUrl);
 
   const res = await fetch(url.toString());
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`TicketsData /events failed: ${res.status} — ${body}`);
+  const data = await res.json();
+
+  if (!res.ok || data.status === 'error') {
+    throw new Error(`/match failed for ${eventUrl}: ${JSON.stringify(data)}`);
   }
-  return res.json();
+  return data;
 }
 
-async function tdFetch(username, password, platform, eventUrl) {
-  try {
-    const url = new URL(`${TD_BASE}/fetch`);
-    url.searchParams.set('username', username);
-    url.searchParams.set('password', password);
-    url.searchParams.set('platform', platform);
-    url.searchParams.set('event_url', eventUrl);
+function extractOpportunity(matchData, meta) {
+  const intel = matchData?.fetch_results?.intelligence;
+  const snapshot = intel?.cross_market_snapshot;
+  const summaries = intel?.market_summaries || {};
+  const sectionArb = intel?.section_arbitrage || [];
+  const recs = intel?.recommendations || {};
 
-    const res = await fetch(url.toString());
-    if (!res.ok) return null;
-    const data = await res.json();
+  if (!snapshot && !Object.keys(summaries).length) return null;
 
-    // Normalize items array regardless of platform response shape
-    const items = data.items || data.listings || data.body?._embedded?.offer || [];
-    if (!items.length) return null;
+  // Build per-platform summaries array
+  const platformList = Object.entries(summaries).map(([platform, s]) => ({
+    platform,
+    min_price: s.cheapest_entry_total ?? s.cheapest_entry_prefee ?? s.price_stats?.min ?? 0,
+    avg_price: s.price_stats?.median ?? s.price_stats?.avg ?? 0,
+    listing_count: s.listing_count ?? 0,
+    url: matchData?.matches?.[platform] ?? '',
+  })).filter(p => p.min_price > 0);
 
-    const prices = items
-      .map(i => parseFloat(i.rawPrice || i.price?.replace(/[^0-9.]/g, '') || i.listPrice || i.totalPrice || 0))
-      .filter(p => p > 0);
+  if (!platformList.length) return null;
 
-    if (!prices.length) return null;
-
-    prices.sort((a, b) => a - b);
-    const min = prices[0];
-    const max = prices[prices.length - 1];
-    const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
-
-    return {
-      platform,
-      min_price: Math.round(min),
-      avg_price: avg,
-      max_price: Math.round(max),
-      listing_count: items.length,
-      url: eventUrl,
-    };
-  } catch {
-    return null;
-  }
-}
-
-// Map StubHub event URL → equivalent URLs on other platforms
-// TicketsData /events only gives StubHub URLs; for SeatGeek/VividSeats we pass the StubHub
-// URL and TicketsData resolves the cross-platform match automatically.
-function crossPlatformUrls(stubhubUrl) {
-  return {
-    stubhub: stubhubUrl,
-    seatgeek: stubhubUrl,   // TD accepts SH url and cross-matches
-    vividseats: stubhubUrl, // same
-  };
-}
-
-function computeOpportunity(platformSummaries) {
-  const valid = platformSummaries.filter(s => s && s.min_price > 0);
-  if (valid.length < 1) return null;
-
-  valid.sort((a, b) => a.min_price - b.min_price);
-  const cheapest = valid[0];
-  const priciest = valid[valid.length - 1];
+  platformList.sort((a, b) => a.min_price - b.min_price);
+  const cheapest = platformList[0];
+  const priciest = platformList[platformList.length - 1];
 
   const currentPrice = cheapest.min_price;
   const highestPrice = priciest.min_price;
-  const allAvgs = valid.filter(s => s.avg_price).map(s => s.avg_price);
+  const allAvgs = platformList.filter(p => p.avg_price > 0).map(p => p.avg_price);
   const marketAvg = allAvgs.length
     ? Math.round(allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length)
-    : Math.round(valid.map(s => s.min_price).reduce((a, b) => a + b, 0) / valid.length);
+    : Math.round(platformList.map(p => p.min_price).reduce((a, b) => a + b, 0) / platformList.length);
 
   const discountVsAvg = marketAvg > 0 ? Math.round(((marketAvg - currentPrice) / marketAvg) * 100) : 0;
   const discountVsHighest = highestPrice > currentPrice
     ? Math.round(((highestPrice - currentPrice) / highestPrice) * 100)
     : 0;
 
-  const signalType = valid.length >= 2 ? 'Arbitrage' : 'Price Analysis';
+  // Find best section arbitrage spread if available
+  let topSection = null;
+  if (sectionArb.length > 0) {
+    const sorted = [...sectionArb].sort((a, b) => (b.spread_pct ?? 0) - (a.spread_pct ?? 0));
+    topSection = sorted[0];
+  }
+
+  const signalType = platformList.length >= 2 ? 'Arbitrage' : 'Price Analysis';
+
+  const roundPts = { 'Final': 35, 'Semi-Final': 28, 'Quarter-Final': 22, 'Round of 16': 16, 'Round of 32': 12, 'Third Place': 10, 'Group Stage': 5 };
+  const spreadScore = Math.min(discountVsHighest * 0.8, 30);
+  const platformBonus = Math.min((platformList.length - 1) * 8, 20);
+  const roundScore = roundPts[meta.round] || 5;
+  const opportunityScore = Math.min(Math.round(spreadScore + platformBonus + roundScore), 99);
+
+  const demandMap = { 'Final': 'Ultra High', 'Semi-Final': 'Ultra High', 'Quarter-Final': 'High', 'Round of 16': 'Medium', 'Round of 32': 'Medium', 'Group Stage': 'Low' };
+
+  // Enhanced market summaries with section arb data
+  const marketSummariesPayload = platformList.map(p => ({
+    platform: p.platform,
+    min_price: p.min_price,
+    avg_price: p.avg_price,
+    listing_count: p.listing_count,
+    url: p.url,
+  }));
+
+  if (topSection) {
+    marketSummariesPayload.push({
+      section_arbitrage: topSection,
+    });
+  }
 
   return {
+    match: meta.match,
+    stadium: meta.stadium,
+    city: meta.city,
+    match_date: new Date(meta.match_date).toISOString(),
+    round: meta.round,
+    demand_tier: demandMap[meta.round] || 'Medium',
     signal_type: signalType,
-    current_price: currentPrice,
+    current_price: Math.round(currentPrice),
     market_value: marketAvg,
-    highest_price: highestPrice,
+    highest_price: Math.round(highestPrice),
     discount_pct: discountVsAvg,
     vs_highest_pct: discountVsHighest,
+    opportunity_score: opportunityScore,
     source: cheapest.platform,
-    source_url: cheapest.url,
+    source_url: cheapest.url || meta.stubhub_url,
     best_platform: cheapest.platform,
     worst_platform: priciest.platform,
-    platforms_compared: valid.length,
-    market_summaries: JSON.stringify(valid),
-    quantity_available: valid.reduce((s, p) => s + (p.listing_count || 0), 0),
+    platforms_compared: platformList.length,
+    market_summaries: JSON.stringify(marketSummariesPayload),
+    quantity_available: platformList.reduce((s, p) => s + (p.listing_count || 0), 0),
+    category: 'Category 1',
+    is_active: true,
+    last_scanned: new Date().toISOString(),
   };
-}
-
-function scoreOpportunity(opp, round) {
-  const roundPts = { 'Final': 35, 'Semi-Final': 28, 'Quarter-Final': 22, 'Round of 16': 16, 'Round of 32': 12, 'Third Place': 10, 'Group Stage': 5 };
-  const spreadScore = Math.min((opp.vs_highest_pct || 0) * 0.8, 30);
-  const platformBonus = Math.min((opp.platforms_compared - 1) * 8, 20);
-  const roundScore = roundPts[round] || 5;
-  return Math.min(Math.round(spreadScore + platformBonus + roundScore), 99);
-}
-
-function classifyRound(name) {
-  const n = (name || '').toLowerCase();
-  if (n.includes('third')) return 'Third Place';
-  if (n.includes('final') && n.includes('semi')) return 'Semi-Final';
-  if (n.includes('final') && n.includes('quarter')) return 'Quarter-Final';
-  if (n.includes('final')) return 'Final';
-  if (n.includes('semi')) return 'Semi-Final';
-  if (n.includes('quarter')) return 'Quarter-Final';
-  if (n.includes('round of 16')) return 'Round of 16';
-  if (n.includes('round of 32')) return 'Round of 32';
-  return 'Group Stage';
-}
-
-function demandTier(round) {
-  if (round === 'Final' || round === 'Semi-Final') return 'Ultra High';
-  if (round === 'Quarter-Final') return 'High';
-  if (round === 'Round of 16' || round === 'Round of 32') return 'Medium';
-  return 'Low';
 }
 
 Deno.serve(async (req) => {
@@ -165,60 +170,32 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'TICKETSDATA credentials not configured' }, { status: 500 });
     }
 
-    // Step 1: Get all WC2026 StubHub event URLs (1 credit)
-    const events = await tdEvents(tdUser, tdPass);
-    if (!Array.isArray(events) || events.length === 0) {
-      return Response.json({ error: 'No events returned', raw: events }, { status: 404 });
-    }
-
     const opportunities = [];
     const errors = [];
+    let reportsRemaining = null;
 
-    // Step 2: For each match, fetch all 3 platforms in parallel
-    for (const ev of events) {
+    // Process sequentially to avoid rate-limiting — 1 report per match
+    for (const matchMeta of PREMIUM_MATCHES) {
       try {
-        const stubhubUrl = ev.url || ev.event_url || ev.link;
-        if (!stubhubUrl) continue;
+        console.log(`[Ghost] Fetching /match for: ${matchMeta.match}`);
+        const matchData = await tdMatch(tdUser, tdPass, matchMeta.stubhub_url);
 
-        const matchName = ev.name || ev.title || ev.event_name || 'Unknown Match';
-        const venue = ev.venue || ev.venue_name || '';
-        const city = ev.city || ev.location || '';
-        const eventDate = ev.date || ev.event_date || ev.datetime || null;
-        const round = classifyRound(matchName);
+        // Capture remaining quota from last response
+        if (matchData.reports_remaining !== undefined) {
+          reportsRemaining = matchData.reports_remaining;
+        }
 
-        const urls = crossPlatformUrls(stubhubUrl);
-
-        // Fetch all platforms in parallel
-        const [shData, sgData, vsData] = await Promise.all([
-          tdFetch(tdUser, tdPass, 'stubhub', urls.stubhub),
-          tdFetch(tdUser, tdPass, 'seatgeek', urls.seatgeek),
-          tdFetch(tdUser, tdPass, 'vividseats', urls.vividseats),
-        ]);
-
-        const summaries = [shData, sgData, vsData].filter(Boolean);
-        const opp = computeOpportunity(summaries);
+        const opp = extractOpportunity(matchData, matchMeta);
         if (!opp) {
-          errors.push({ match: matchName, reason: 'no_price_data' });
+          errors.push({ match: matchMeta.match, reason: 'no_price_data_in_response' });
           continue;
         }
 
-        const score = scoreOpportunity(opp, round);
-
-        opportunities.push({
-          match: matchName,
-          stadium: venue,
-          city,
-          match_date: eventDate ? new Date(eventDate).toISOString() : null,
-          category: 'Category 1',
-          round,
-          demand_tier: demandTier(round),
-          opportunity_score: score,
-          is_active: true,
-          last_scanned: new Date().toISOString(),
-          ...opp,
-        });
+        opportunities.push(opp);
+        console.log(`[Ghost] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price} (${opp.best_platform}), spread ${opp.vs_highest_pct}%`);
       } catch (err) {
-        errors.push({ match: ev.name || ev.title, error: err.message });
+        errors.push({ match: matchMeta.match, error: err.message });
+        console.error(`[Ghost] Error for ${matchMeta.match}: ${err.message}`);
       }
     }
 
@@ -236,12 +213,19 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      events_found: events.length,
       opportunities_saved: opportunities.length,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
-      price_analysis_signals: opportunities.filter(o => o.signal_type === 'Price Analysis').length,
       errors: errors.length,
       error_list: errors,
+      reports_remaining: reportsRemaining,
+      opportunities: opportunities.map(o => ({
+        match: o.match,
+        platforms: o.platforms_compared,
+        best_price: o.current_price,
+        best_platform: o.best_platform,
+        spread_pct: o.vs_highest_pct,
+        score: o.opportunity_score,
+      })),
     });
 
   } catch (error) {
