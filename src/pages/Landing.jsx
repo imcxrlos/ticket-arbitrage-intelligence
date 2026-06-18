@@ -68,7 +68,7 @@ const fadeUpView = (delay = 0) => ({
 function RoadmapCard({ item, index }) {
   const [hovered, setHovered] = useState(false);
 
-  const accentColor = item.status === "live" ? "#22c55e" : item.highlight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)";
+  const accentColor = item.status === "live" ? "#22c55e" : item.highlight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)";
   const borderColor = item.status === "live"
     ? hovered ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.18)"
     : item.highlight
@@ -180,18 +180,17 @@ function RoadmapCard({ item, index }) {
           )}
         </div>
 
-        {/* Right: tag + status */}
+        {/* Right: status */}
         <div className="shrink-0 text-right flex flex-col items-end gap-2">
-          <span className="text-[13px] font-mono font-bold" style={{ color: accentColor }}>{item.tag}</span>
           {item.status === "live" ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}>
               <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-              <span className="text-[10px] font-mono text-ghost-green">Active now</span>
+              <span className="text-[10px] font-mono text-ghost-green font-semibold">Now</span>
             </div>
           ) : (
-            <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.15)" }}>
-              {item.status === "upcoming" ? "Coming soon" : "Planned"}
-            </span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <span className="text-[10px] font-mono font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>Soon</span>
+            </div>
           )}
         </div>
       </div>
