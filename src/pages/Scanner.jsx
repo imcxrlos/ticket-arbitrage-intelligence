@@ -98,7 +98,7 @@ export default function Scanner() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search match or city..."
-              className="w-full h-9 pl-9 pr-3 bg-white/4 border border-white/8 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors"
+              className="w-full h-9 pl-9 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             />
           </div>
 
@@ -107,7 +107,7 @@ export default function Scanner() {
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="w-full h-8 px-2 bg-white/4 border border-white/8 rounded-lg text-xs text-white/60 font-mono outline-none appearance-none cursor-pointer"
+              className="w-full h-8 px-2 rounded-lg text-xs text-white/60 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <option value="score">Opportunity Score</option>
               <option value="discount">Discount %</option>
@@ -137,13 +137,13 @@ export default function Scanner() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Match or city..."
-                  className="w-full h-8 pl-7 pr-3 bg-white/4 border border-white/8 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors"
+                  className="w-full h-8 pl-7 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="h-8 px-2 bg-white/4 border border-white/8 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer"
+                className="h-8 px-2 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <option value="score">Score</option>
                 <option value="discount">Discount</option>
