@@ -176,13 +176,25 @@ export default function Landing() {
                   Scan the Market
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-                <Link
-                  to="/scanner"
-                  className="group inline-flex items-center justify-center gap-2 h-12 px-7 glass text-white font-medium rounded hover:bg-white/5 transition-all text-sm border border-white/10"
+                <a
+                  href="https://pump.fun"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative inline-flex items-center justify-center gap-2 h-12 px-7 text-white font-medium rounded transition-all text-sm overflow-hidden"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(153,69,255,0.35)",
+                    boxShadow: "0 0 18px rgba(153,69,255,0.15), inset 0 0 18px rgba(153,69,255,0.04)"
+                  }}
                 >
-                  Find Opportunities
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform opacity-50" />
-                </Link>
+                  <span className="absolute inset-0 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ boxShadow: "0 0 28px rgba(153,69,255,0.25), inset 0 0 24px rgba(153,69,255,0.07)" }} />
+                  <span className="relative flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#9945FF" }} />
+                    pump.fun
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform opacity-50" />
+                  </span>
+                </a>
               </motion.div>
 
               {/* Stats row */}
