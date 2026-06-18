@@ -194,13 +194,7 @@ export default function Scanner() {
               </div>
             ))}
 
-            <div>
-              <label className="text-[10px] text-white/30 font-mono block mb-1.5">Min Score</label>
-              <input type="number" min={0} max={100} value={filters.minScore}
-                onChange={e => setFilters(f => ({ ...f, minScore: Number(e.target.value) }))}
-                placeholder="0"
-                className="w-full h-8 px-2 bg-white/3 border border-white/8 rounded text-xs text-white/55 font-mono outline-none hover:border-white/12 transition-colors" />
-            </div>
+
 
             <div>
               <label className="text-[10px] text-white/30 font-mono block mb-1.5">Max Price ($)</label>
