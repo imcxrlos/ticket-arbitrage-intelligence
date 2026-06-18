@@ -11,6 +11,8 @@ import Scanner from './pages/Scanner';
 import Watchlist from './pages/Watchlist';
 import Alerts from './pages/Alerts';
 import Login from './pages/Login';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -43,6 +45,8 @@ const AuthenticatedApp = () => {
       <Route path="/watchlist" element={<Watchlist />} />
       <Route path="/alerts" element={<Alerts />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

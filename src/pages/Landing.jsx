@@ -323,7 +323,11 @@ export default function Landing() {
             <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
             <span className="text-sm font-display font-semibold text-white/40">Ghost</span>
           </div>
-          <p className="text-xs text-white/20 font-mono">FIFA World Cup 2026 Arbitrage Intelligence</p>
+          <div className="flex items-center gap-4">
+            <Link to="/terms" className="text-xs text-white/20 hover:text-white/50 font-mono transition-colors">Terms</Link>
+            <Link to="/privacy" className="text-xs text-white/20 hover:text-white/50 font-mono transition-colors">Privacy</Link>
+            <span className="text-xs text-white/20 font-mono">FIFA World Cup 2026 Arbitrage Intelligence</span>
+          </div>
         </div>
       </footer>
     </div>
