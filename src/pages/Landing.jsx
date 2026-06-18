@@ -30,17 +30,17 @@ const HOW_STEPS = [
 
 const ROADMAP = [
   {
-    phase: "Phase 1", status: "live", label: "Open Beta", tag: "Now",
+    phase: "Phase 1", status: "done", label: "Open Beta", tag: "Done",
     title: "Free for everyone. Always.",
     desc: "Ghost launches in open beta — no paywalls, no waitlists. Every feature is free. Use it, break it, tell us what to fix.",
   },
   {
-    phase: "Phase 2", status: "upcoming", label: "Algorithm Refinement", tag: "Q3 2026",
+    phase: "Phase 2", status: "done", label: "Algorithm Refinement", tag: "Done",
     title: "Smarter signals, more markets.",
     desc: "Expanded platform coverage, improved arbitrage scoring accuracy, and demand-tier forecasting. The scanner becomes genuinely predictive.",
   },
   {
-    phase: "Phase 3", status: "upcoming", label: "Coin Launch", tag: "Q4 2026",
+    phase: "Phase 3", status: "live", label: "Coin Launch", tag: "Now",
     title: "Where Ghost is going.",
     desc: "A token launch via pump.fun to fund infrastructure, data partnerships, and a full-time dev team. Token holders get early access and governance input.",
     highlight: true,
@@ -68,14 +68,16 @@ const fadeUpView = (delay = 0) => ({
 function RoadmapCard({ item, index }) {
   const [hovered, setHovered] = useState(false);
 
-  const accentColor = item.status === "live" ? "#22c55e" : item.highlight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)";
-  const borderColor = item.status === "live"
+  const isLive = item.status === "live";
+  const isDone = item.status === "done";
+  const accentColor = isLive ? "#22c55e" : item.highlight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)";
+  const borderColor = isLive
     ? hovered ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.18)"
     : item.highlight
     ? hovered ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.09)"
     : hovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)";
 
-  const bg = item.status === "live"
+  const bg = isLive
     ? hovered ? "rgba(34,197,94,0.06)" : "rgba(34,197,94,0.03)"
     : item.highlight
     ? hovered ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.025)"
@@ -182,10 +184,14 @@ function RoadmapCard({ item, index }) {
 
         {/* Right: status */}
         <div className="shrink-0 text-right flex flex-col items-end gap-2">
-          {item.status === "live" ? (
+          {isLive ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}>
               <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
               <span className="text-[10px] font-mono text-ghost-green font-semibold">Now</span>
+            </div>
+          ) : isDone ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <span className="text-[10px] font-mono font-medium" style={{ color: "rgba(255,255,255,0.2)" }}>Done</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
