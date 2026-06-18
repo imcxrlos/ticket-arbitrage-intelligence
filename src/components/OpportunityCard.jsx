@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Tag, Bookmark, BookmarkCheck, ExternalLink, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, Bookmark, BookmarkCheck, ArrowRight, GitCompareArrows } from "lucide-react";
 import { format } from "date-fns";
 
 function ScoreRing({ score, size = 52 }) {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-  const color = score >= 85 ? "#22c55e" : score >= 65 ? "#f59e0b" : "#ef4444";
-  const label = score >= 85 ? "Strong" : score >= 65 ? "Fair" : "Weak";
+  const color = score >= 75 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const label = score >= 75 ? "Strong" : score >= 50 ? "Fair" : "Weak";
   return (
     <div className="relative shrink-0 flex flex-col items-center gap-1">
       <div style={{ width: size, height: size, position: "relative" }}>
@@ -27,22 +27,20 @@ function ScoreRing({ score, size = 52 }) {
 
 export default function OpportunityCard({ opportunity, index = 0, onSave, isSaved, onViewDetail }) {
   const {
-    match, team_home, team_away, stadium, city, match_date,
-    category, current_price, market_value, discount_pct,
-    opportunity_score, quantity_available, demand_tier, round, source_url
+    match, stadium, city, match_date,
+    current_price, market_value, highest_price,
+    discount_pct, vs_highest_pct, opportunity_score,
+    demand_tier, round, source_url, source,
+    signal_type, platforms_compared, best_platform, worst_platform
   } = opportunity;
 
-  const disc = discount_pct ?? (market_value > 0 ? Math.round((1 - current_price / market_value) * 100) : 0);
+  const disc = discount_pct ?? 0;
+  const vsHighest = vs_highest_pct ?? 0;
   const score = opportunity_score ?? 0;
-
-  const demandColor = {
-    "Ultra High": "text-ghost-green",
-    "High": "text-ghost-amber",
-    "Medium": "text-white/50",
-    "Low": "text-white/30",
-  }[demand_tier] || "text-white/30";
-
+  const isArbitrage = signal_type === "Arbitrage";
   const date = match_date ? format(new Date(match_date), "MMM d, yyyy") : "TBD";
+
+  const edgeColor = vsHighest >= 25 ? "#22c55e" : vsHighest >= 12 ? "#f59e0b" : "#6b7280";
 
   return (
     <motion.div
@@ -55,7 +53,7 @@ export default function OpportunityCard({ opportunity, index = 0, onSave, isSave
       {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
         <div className="flex items-center gap-2">
-          {disc >= 30 && (
+          {isArbitrage && vsHighest >= 15 && (
             <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
           )}
           <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">
@@ -63,11 +61,16 @@ export default function OpportunityCard({ opportunity, index = 0, onSave, isSave
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {demand_tier && (
-            <span className={`text-[10px] font-mono ${demandColor} uppercase tracking-wider`}>
-              {demand_tier} Demand
-            </span>
-          )}
+          {/* Signal badge */}
+          <span className={`text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded ${
+            isArbitrage
+              ? "text-ghost-green bg-ghost-green/10 border border-ghost-green/20"
+              : "text-white/25 bg-white/5 border border-white/8"
+          }`}>
+            {isArbitrage ? (
+              <span className="flex items-center gap-1"><GitCompareArrows className="w-2.5 h-2.5 inline" /> Arbitrage</span>
+            ) : "Price Analysis"}
+          </span>
           <button
             onClick={(e) => { e.stopPropagation(); onSave?.(opportunity); }}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/5 transition-colors"
@@ -82,7 +85,7 @@ export default function OpportunityCard({ opportunity, index = 0, onSave, isSave
 
       <div className="p-5">
         {/* Match + Score */}
-        <div className="flex items-start justify-between mb-5 gap-4">
+        <div className="flex items-start justify-between mb-4 gap-4">
           <div className="min-w-0">
             <div className="font-display text-base font-semibold text-white mb-1.5 leading-tight truncate">{match}</div>
             <div className="flex items-center gap-1.5 mb-1">
@@ -98,39 +101,42 @@ export default function OpportunityCard({ opportunity, index = 0, onSave, isSave
         </div>
 
         {/* Price grid */}
-        <div className="grid grid-cols-3 gap-px bg-white/5 rounded-md overflow-hidden mb-4">
+        <div className="grid grid-cols-3 gap-px bg-white/5 rounded-md overflow-hidden mb-3">
           <div className="bg-[#111]/80 p-3">
-            <div className="text-[9px] text-white/25 font-mono mb-1.5 uppercase tracking-widest">Current</div>
-            <div className="font-display font-bold text-white text-base">${current_price?.toLocaleString()}</div>
+            <div className="text-[9px] text-white/25 font-mono mb-1 uppercase tracking-widest">Cheapest</div>
+            <div className="font-display font-bold text-white text-sm">${current_price?.toLocaleString()}</div>
+            {best_platform && <div className="text-[8px] text-white/25 font-mono mt-0.5 capitalize">{best_platform}</div>}
           </div>
           <div className="bg-[#111]/80 p-3">
-            <div className="text-[9px] text-white/25 font-mono mb-1.5 uppercase tracking-widest">Market</div>
-            <div className="font-display font-bold text-white/40 text-base">${market_value?.toLocaleString()}</div>
+            <div className="text-[9px] text-white/25 font-mono mb-1 uppercase tracking-widest">Avg Market</div>
+            <div className="font-display font-bold text-white/50 text-sm">${market_value?.toLocaleString()}</div>
+            {platforms_compared > 1 && <div className="text-[8px] text-white/20 font-mono mt-0.5">{platforms_compared} platforms</div>}
           </div>
           <div className="bg-[#111]/80 p-3">
-            <div className="text-[9px] text-white/25 font-mono mb-1.5 uppercase tracking-widest">Edge</div>
-            <div className={`font-display font-bold text-base ${disc >= 30 ? "text-ghost-green" : disc >= 15 ? "text-ghost-amber" : "text-white/60"}`}>
-              −{disc}%
+            <div className="text-[9px] text-white/25 font-mono mb-1 uppercase tracking-widest">
+              {isArbitrage ? "Spread" : "vs Avg"}
             </div>
+            <div className="font-display font-bold text-sm" style={{ color: edgeColor }}>
+              {isArbitrage ? `−${vsHighest}%` : `−${disc}%`}
+            </div>
+            {isArbitrage && worst_platform && (
+              <div className="text-[8px] text-white/20 font-mono mt-0.5 capitalize">vs {worst_platform}</div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <Tag className="w-3 h-3 text-white/20" />
-              <span className="text-[10px] text-white/30 font-mono">{category}</span>
-            </div>
-            {quantity_available !== undefined && (
-              <span className="text-[10px] text-white/20 font-mono">{quantity_available} left</span>
+          <div className="flex items-center gap-2">
+            {platforms_compared > 0 && (
+              <span className="text-[9px] text-white/20 font-mono">{platforms_compared} platform{platforms_compared !== 1 ? "s" : ""} compared</span>
             )}
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onViewDetail?.(opportunity); }}
             className="flex items-center gap-1 text-[10px] text-white/35 hover:text-white font-mono transition-colors group-hover:text-white/60"
           >
-            View Deal <ArrowRight className="w-3 h-3" />
+            View Detail <ArrowRight className="w-3 h-3" />
           </button>
         </div>
       </div>

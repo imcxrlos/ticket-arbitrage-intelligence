@@ -33,14 +33,33 @@
         "Premium"
       ]
     },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "Arbitrage",
+        "Price Analysis"
+      ],
+      "description": "Arbitrage = real cross-market spread found. Price Analysis = single platform only."
+    },
     "current_price": {
-      "type": "number"
+      "type": "number",
+      "description": "Cheapest price found across all platforms"
     },
     "market_value": {
-      "type": "number"
+      "type": "number",
+      "description": "Average price across all platforms (real market average)"
+    },
+    "highest_price": {
+      "type": "number",
+      "description": "Highest price found across all platforms"
     },
     "discount_pct": {
-      "type": "number"
+      "type": "number",
+      "description": "Savings vs market average %"
+    },
+    "vs_highest_pct": {
+      "type": "number",
+      "description": "Savings vs most expensive platform %"
     },
     "opportunity_score": {
       "type": "number"
@@ -49,7 +68,22 @@
       "type": "string"
     },
     "source": {
+      "type": "string",
+      "description": "Best (cheapest) marketplace name"
+    },
+    "best_platform": {
       "type": "string"
+    },
+    "worst_platform": {
+      "type": "string"
+    },
+    "platforms_compared": {
+      "type": "number",
+      "description": "Number of platforms with live data"
+    },
+    "market_summaries": {
+      "type": "string",
+      "description": "JSON string: array of {platform, min_price, avg_price, listing_count, url}"
     },
     "quantity_available": {
       "type": "number"
