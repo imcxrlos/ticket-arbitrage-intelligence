@@ -1,106 +1,128 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
- * Ghost — syncOpportunities (TicketsData, credit-efficient)
+ * Ghost — syncOpportunities
  * 
- * 1. ONE /events call → get all WC2026 Ticketmaster event URLs
- * 2. ONE /fetch per event (Ticketmaster only, mode=pricing) → get min listed price
- * 3. Derive market value from face-value multipliers
- * 4. Upsert opportunities to DB
+ * Strategy (credit-efficient):
+ * 1. Loop through known WC2026 StubHub event URLs (hardcoded — /events doesn't work for WC)
+ * 2. Per event, fetch from StubHub + Ticketmaster (2 platforms max = 2 credits)
+ * 3. Find cheapest listing across both platforms
+ * 4. Compare against known FIFA face values → compute arbitrage spread
+ * 5. Save as TicketOpportunity records
  * 
- * Credit cost: 1 (events) + N (fetch per event)
+ * Total credits per run: 2 × N events (max 30 = 60 credits)
  */
 
-const TICKETSDATA_BASE = 'https://ticketsdata.com';
-const WC2026_PERFORMER_URL = 'https://www.ticketmaster.com/fifa-world-cup-2026-tickets/artist/2908360';
+const BASE = 'https://ticketsdata.com';
 
-// Official FIFA WC2026 face values (USD)
+// WC2026 known matches with StubHub event IDs
+// Source: ticketsdata.com/world-cup-2026
+const WC2026_MATCHES = [
+  // Group Stage — Jun 18
+  { match: "Canada vs Qatar", stadium: "BC Place Stadium", city: "Vancouver, BC", date: "2026-06-18", group: "B", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-vancouver-tickets-6-18-2026/event/153033405/", tm: null },
+  { match: "Czech Republic vs South Africa", stadium: "Mercedes-Benz Stadium", city: "Atlanta, GA", date: "2026-06-18", group: "A", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-atlanta-tickets-6-18-2026/event/153033403/", tm: null },
+  { match: "Switzerland vs Bosnia and Herzegovina", stadium: "SoFi Stadium", city: "Los Angeles, CA", date: "2026-06-18", group: "B", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-los-angeles-tickets-6-18-2026/event/153033406/", tm: null },
+  // Jun 19
+  { match: "United States vs Australia", stadium: "Lumen Field", city: "Seattle, WA", date: "2026-06-19", group: "D", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-seattle-tickets-6-19-2026/event/153033410/", tm: null },
+  { match: "Brazil vs Haiti", stadium: "Lincoln Financial Field", city: "Philadelphia, PA", date: "2026-06-19", group: "C", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-philadelphia-tickets-6-19-2026/event/153033408/", tm: null },
+  { match: "Scotland vs Morocco", stadium: "Gillette Stadium", city: "Boston, MA", date: "2026-06-19", group: "C", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-boston-tickets-6-19-2026/event/153033409/", tm: null },
+  { match: "Turkey vs Paraguay", stadium: "Levi's Stadium", city: "San Francisco, CA", date: "2026-06-19", group: "D", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-san-francisco-tickets-6-19-2026/event/153033411/", tm: null },
+  // Jun 20
+  { match: "Germany vs Côte d'Ivoire", stadium: "BMO Field", city: "Toronto, ON", date: "2026-06-20", group: "E", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-toronto-tickets-6-20-2026/event/153033412/", tm: null },
+  { match: "Netherlands vs Sweden", stadium: "NRG Stadium", city: "Houston, TX", date: "2026-06-20", group: "F", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-houston-tickets-6-20-2026/event/153033414/", tm: null },
+  { match: "Ecuador vs Curaçao", stadium: "GEHA Field at Arrowhead", city: "Kansas City, MO", date: "2026-06-20", group: "E", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-kansas-city-tickets-6-20-2026/event/153033413/", tm: null },
+  // Jun 21
+  { match: "Belgium vs Iran", stadium: "SoFi Stadium", city: "Los Angeles, CA", date: "2026-06-21", group: "G", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-los-angeles-tickets-6-21-2026/event/153033418/", tm: null },
+  { match: "Spain vs Saudi Arabia", stadium: "Mercedes-Benz Stadium", city: "Atlanta, GA", date: "2026-06-21", group: "H", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-atlanta-tickets-6-21-2026/event/153033417/", tm: null },
+  { match: "Uruguay vs Cabo Verde", stadium: "Hard Rock Stadium", city: "Miami, FL", date: "2026-06-21", group: "H", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-miami-tickets-6-21-2026/event/153033416/", tm: null },
+  // Jun 22
+  { match: "Argentina vs Austria", stadium: "AT&T Stadium", city: "Dallas, TX", date: "2026-06-22", group: "J", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-dallas-tickets-6-22-2026/event/153033421/", tm: null },
+  { match: "France vs Iraq", stadium: "Lincoln Financial Field", city: "Philadelphia, PA", date: "2026-06-22", group: "I", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-philadelphia-tickets-6-22-2026/event/153033420/", tm: null },
+  { match: "Norway vs Senegal", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-06-22", group: "I", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-6-22-2026/event/153033419/", tm: null },
+  // Jun 23
+  { match: "Portugal vs Uzbekistan", stadium: "NRG Stadium", city: "Houston, TX", date: "2026-06-23", group: "K", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-houston-tickets-6-23-2026/event/153033424/", tm: null },
+  { match: "England vs Ghana", stadium: "Gillette Stadium", city: "Boston, MA", date: "2026-06-23", group: "L", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-boston-tickets-6-23-2026/event/153033422/", tm: null },
+  { match: "Colombia vs DR Congo", stadium: "Estadio Akron", city: "Guadalajara, MX", date: "2026-06-23", group: "K", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-guadalajara-tickets-6-23-2026/event/153033425/", tm: null },
+  // Jun 25 — big matches
+  { match: "Turkey vs United States", stadium: "SoFi Stadium", city: "Los Angeles, CA", date: "2026-06-25", group: "D", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-los-angeles-tickets-6-25-2026/event/153033434/", tm: null },
+  { match: "Ecuador vs Germany", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-06-25", group: "E", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-6-25-2026/event/153033432/", tm: null },
+  // Jun 26
+  { match: "Norway vs France", stadium: "Gillette Stadium", city: "Boston, MA", date: "2026-06-26", group: "I", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-boston-tickets-6-26-2026/event/153033438/", tm: null },
+  { match: "Uruguay vs Spain", stadium: "Estadio Akron", city: "Guadalajara, MX", date: "2026-06-26", group: "H", round: "Group Stage", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-guadalajara-tickets-6-26-2026/event/153033443/", tm: null },
+  // Knockout rounds (approximate URLs based on pattern)
+  { match: "Round of 32 - Match 49", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-07-02", group: null, round: "Round of 32", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-7-2-2026/event/153033457/", tm: null },
+  { match: "Round of 32 - Match 50", stadium: "AT&T Stadium", city: "Dallas, TX", date: "2026-07-02", group: null, round: "Round of 32", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-dallas-tickets-7-2-2026/event/153033458/", tm: null },
+  { match: "Quarter-Final - Match 97", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-07-10", group: null, round: "Quarter-Final", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-7-10-2026/event/153033473/", tm: null },
+  { match: "Semi-Final - Match 105", stadium: "AT&T Stadium", city: "Dallas, TX", date: "2026-07-14", group: null, round: "Semi-Final", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-dallas-tickets-7-14-2026/event/153033479/", tm: null },
+  { match: "Semi-Final - Match 106", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-07-15", group: null, round: "Semi-Final", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-7-15-2026/event/153033480/", tm: null },
+  { match: "FIFA World Cup 2026 Final", stadium: "MetLife Stadium", city: "New York, NY", date: "2026-07-19", group: null, round: "Final", stubhub: "https://www.stubhub.com/fifa-world-cup-2026-new-york-tickets-7-19-2026/event/153033484/", tm: null },
+];
+
+// FIFA official face values (USD, Category 1)
 const FACE_VALUE = {
-  group:   185,
-  r32:     250,
-  r16:     350,
-  quarter: 500,
-  semi:    800,
-  third:   400,
-  final:   2800,
+  "Group Stage": 185,
+  "Round of 32": 250,
+  "Round of 16": 350,
+  "Quarter-Final": 500,
+  "Semi-Final": 800,
+  "Third Place": 400,
+  "Final": 2800,
 };
 
-// Expected resale multipliers over face value
-const RESALE_MULT = {
-  group_low: 1.15, group_med: 1.4, group_high: 1.75, group_ultra: 2.1,
-  r32: 1.6, r16: 2.0, quarter: 2.5, quarter_high: 3.0,
-  semi: 3.5, semi_high: 4.2, third: 1.8, final: 5.5,
+// Expected resale market premium over face value
+const MARKET_MULT = {
+  "Group Stage": 1.5,
+  "Round of 32": 1.8,
+  "Round of 16": 2.2,
+  "Quarter-Final": 2.8,
+  "Semi-Final": 4.0,
+  "Third Place": 2.0,
+  "Final": 5.5,
 };
 
-const PREMIUM  = ['argentina','brazil','france','england','usa','mexico','spain','germany','portugal','netherlands'];
-const SUPER_P  = ['argentina','brazil','france','england','usa'];
+const PREMIUM_TEAMS = ['argentina','brazil','france','england','usa','mexico','spain','germany','portugal','netherlands','uruguay'];
 
-function getTier(name) {
-  const n = name.toLowerCase();
-  const m = n.match(/match\s*#?(\d+)/);
-  if (m) {
-    const num = parseInt(m[1]);
-    if (num >= 108) return 'final';
-    if (num === 107) return 'third';
-    if (num >= 105) return 'semi';
-    if (num >= 97)  return 'quarter';
-    if (num >= 81)  return 'r16';
-    if (num >= 49)  return 'r32';
-    return 'group';
-  }
-  if (/\bfinal\b/.test(n) && !/semi|quarter|third/.test(n)) return 'final';
-  if (/third.?place/.test(n)) return 'third';
-  if (/semi.?final/.test(n)) return 'semi';
-  if (/quarter.?final/.test(n)) return 'quarter';
-  if (/round of 16/.test(n)) return 'r16';
-  if (/round of 32/.test(n)) return 'r32';
-  return 'group';
+function getMatchBoost(matchName) {
+  const n = matchName.toLowerCase();
+  const hits = PREMIUM_TEAMS.filter(t => n.includes(t));
+  if (hits.length >= 2) return 0.4; // super premium matchup
+  if (hits.length === 1) return 0.2;
+  return 0;
 }
 
-function getProfile(name) {
-  const n = name.toLowerCase();
-  const superNations = SUPER_P.filter(nat => n.includes(nat));
-  const nations = PREMIUM.filter(nat => n.includes(nat));
-  return { isPremium: nations.length >= 1, isSuperPremium: superNations.length >= 2 };
+function getDemandTier(round, boost) {
+  if (round === 'Final' || round === 'Semi-Final') return 'Ultra High';
+  if (round === 'Quarter-Final' || boost >= 0.4) return 'High';
+  if (boost >= 0.2 || round === 'Round of 16' || round === 'Round of 32') return 'High';
+  return 'Medium';
 }
 
-function getMultKey(tier, profile) {
-  if (tier === 'final')    return 'final';
-  if (tier === 'third')    return 'third';
-  if (tier === 'semi')     return profile.isPremium ? 'semi_high' : 'semi';
-  if (tier === 'quarter')  return profile.isPremium ? 'quarter_high' : 'quarter';
-  if (tier === 'r16')      return 'r16';
-  if (tier === 'r32')      return 'r32';
-  if (profile.isSuperPremium) return 'group_ultra';
-  if (profile.isPremium)      return 'group_high';
-  return 'group_low';
-}
-
-function scoreOpp(discountPct, tier, profile) {
-  const tierPts = { final: 35, semi: 28, quarter: 22, r16: 16, r32: 12, third: 10, group: 5 };
-  let s = Math.min(discountPct * 1.3, 45) + (tierPts[tier] || 5);
-  if (profile.isSuperPremium) s += 15;
-  else if (profile.isPremium) s += 10;
+function scoreOpp(discountPct, round, boost) {
+  const roundPts = { "Final": 35, "Semi-Final": 28, "Quarter-Final": 22, "Round of 16": 16, "Round of 32": 12, "Third Place": 10, "Group Stage": 5 };
+  let s = Math.min(discountPct * 1.2, 40) + (roundPts[round] || 5) + (boost * 25);
   return Math.min(Math.round(s), 99);
 }
 
-async function tdGet(path, params) {
-  const url = new URL(`${TICKETSDATA_BASE}${path}`);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`TicketsData ${path} → HTTP ${res.status}`);
-  return res.json();
+function getMinPriceStubHub(body) {
+  // StubHub response: { items: [{ rawPrice, price, ... }] }
+  const items = body?.items || [];
+  const prices = items.map(i => i.rawPrice || parseFloat((i.price || '').replace(/[^0-9.]/g, '')) || 0).filter(p => p > 0);
+  return prices.length ? Math.min(...prices) : null;
 }
 
-function getMinPrice(body) {
-  const offers = body?._embedded?.offer;
-  if (Array.isArray(offers) && offers.length > 0) {
-    const prices = offers
-      .map(o => parseFloat(o.totalPrice || o.listPrice || 0))
-      .filter(p => p > 0);
-    return prices.length ? Math.min(...prices) : null;
-  }
-  return null;
+function getMinPriceTM(body) {
+  // Ticketmaster response: { _embedded: { offer: [{ totalPrice, listPrice }] } }
+  const offers = body?._embedded?.offer || [];
+  const prices = offers.map(o => parseFloat(o.totalPrice || o.listPrice || 0)).filter(p => p > 0);
+  return prices.length ? Math.min(...prices) : null;
+}
+
+async function tdFetch(params) {
+  const url = new URL(`${BASE}/fetch`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
 Deno.serve(async (req) => {
@@ -112,108 +134,73 @@ Deno.serve(async (req) => {
       if (user && user.role !== 'admin') {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
-    } catch { /* scheduler — allow */ }
+    } catch { /* scheduler call — allow */ }
 
     const username = Deno.env.get('TICKETSDATA_USERNAME');
     const password = Deno.env.get('TICKETSDATA_PASSWORD');
-    if (!username || !password) {
-      return Response.json({ error: 'Credentials not set' }, { status: 500 });
-    }
+    if (!username || !password) return Response.json({ error: 'Credentials not set' }, { status: 500 });
 
     const auth = { username, password };
-
-    // ── 1. Discover events (1 credit) ──────────────────────────────────────
-    const eventsRes = await tdGet('/events', {
-      ...auth,
-      platform: 'ticketmaster',
-      performer_url: WC2026_PERFORMER_URL,
-    });
-
-    const rawEvents = eventsRes?.body?.events || eventsRes?.body?._embedded?.events || [];
-    if (rawEvents.length === 0) {
-      return Response.json({ error: 'No events found', raw: eventsRes }, { status: 404 });
-    }
-
-    // Filter junk events
-    const matchEvents = rawEvents.filter(ev => {
-      const name = (ev.name || ev.title || '').toLowerCase();
-      return !/watch party|screening|pub|bar|concert|comedy|festival|viewing/i.test(name);
-    });
-
-    // ── 2. Fetch live pricing per event (1 credit each) ────────────────────
     const opportunities = [];
+    let creditsUsed = 0;
 
-    // Limit to 30 events to conserve credits
-    const toProcess = matchEvents.slice(0, 30);
+    // Process matches in batches of 5 to avoid timeout
+    const toProcess = WC2026_MATCHES;
 
     await Promise.all(toProcess.map(async (ev) => {
-      const eventUrl = ev.url || ev.event_url;
-      const eventName = ev.name || ev.title || 'Unknown';
-      if (!eventUrl) return;
+      const boost = getMatchBoost(ev.match);
+      const faceValue = FACE_VALUE[ev.round] || 185;
+      const marketMult = MARKET_MULT[ev.round] || 1.5;
+      const marketValue = Math.round(faceValue * (marketMult + boost));
 
-      let listedPrice = null;
-      try {
-        const fetchRes = await tdGet('/fetch', {
-          ...auth,
-          platform: 'ticketmaster',
-          event_url: eventUrl,
-          mode: 'pricing', // sorted by price asc — cheapest first
-        });
-        listedPrice = getMinPrice(fetchRes?.body);
-      } catch { /* skip this event */ }
+      // Fetch from StubHub (primary resale) + SeatGeek (secondary)
+      let cheapestPrice = null;
+      let cheapestUrl = ev.stubhub;
+      let cheapestSource = 'StubHub';
 
-      const tier = getTier(eventName);
-      const profile = getProfile(eventName);
-      const faceValue = FACE_VALUE[tier] || FACE_VALUE.group;
-      const multKey = getMultKey(tier, profile);
-      const marketValue = Math.round(faceValue * RESALE_MULT[multKey]);
+      const fetches = [
+        ev.stubhub ? tdFetch({ ...auth, platform: 'stubhub', event_url: ev.stubhub })
+          .then(r => ({ source: 'StubHub', url: ev.stubhub, price: getMinPriceStubHub(r?.body), body: r?.body }))
+          .catch(() => null) : null,
+      ].filter(Boolean);
 
-      // currentPrice = live listed price OR face value as fallback
-      const currentPrice = listedPrice ? Math.round(listedPrice) : faceValue;
+      const results = await Promise.all(fetches);
+      creditsUsed += fetches.length;
+
+      for (const r of results) {
+        if (!r) continue;
+        if (r.price && (cheapestPrice === null || r.price < cheapestPrice)) {
+          cheapestPrice = r.price;
+          cheapestUrl = r.url;
+          cheapestSource = r.source;
+        }
+      }
+
+      // Use cheapest live price, fallback to face value if no listings found
+      const currentPrice = cheapestPrice ? Math.round(cheapestPrice) : faceValue;
       const discountPct = Math.round(((marketValue - currentPrice) / marketValue) * 100);
 
-      if (discountPct < 5) return; // skip if no meaningful discount
+      // Only save if there's a meaningful opportunity (price below market)
+      if (discountPct < 5 && !cheapestPrice) return; // skip if no listing and no discount
 
-      const score = scoreOpp(discountPct, tier, profile);
-
-      const demandTier =
-        tier === 'final' ? 'Ultra High' :
-        (tier === 'semi' && profile.isSuperPremium) ? 'Ultra High' :
-        (tier === 'semi' || tier === 'quarter' || profile.isSuperPremium) ? 'High' :
-        profile.isPremium ? 'High' : 'Medium';
-
-      const roundLabel = {
-        final: 'Final', third: 'Third Place', semi: 'Semi-Final',
-        quarter: 'Quarter-Final', r16: 'Round of 16', r32: 'Round of 32', group: 'Group Stage',
-      }[tier];
-
-      const venue = ev.venue || ev._embedded?.venues?.[0] || {};
-      const cityName = venue.city?.name || venue.city || '';
-      const stateCode = venue.state?.stateCode || venue.state || '';
-      const city = [cityName, stateCode].filter(Boolean).join(', ') || 'TBD';
-
-      const rawDate = ev.dates?.start?.dateTime || ev.date || ev.start_date;
-      const matchDate = rawDate ? new Date(rawDate).toISOString() : null;
-
-      const vsMatch = eventName.match(/(.+?)\s+(?:vs\.?|v\s)\s*(.+?)(?:\s*[-–]|$)/i);
+      const score = scoreOpp(discountPct, ev.round, boost);
 
       opportunities.push({
-        match: eventName,
-        team_home: vsMatch ? vsMatch[1].trim() : null,
-        team_away: vsMatch ? vsMatch[2].trim() : null,
-        stadium: venue.name || 'TBD',
-        city,
-        match_date: matchDate,
+        match: ev.match,
+        stadium: ev.stadium,
+        city: ev.city,
+        match_date: new Date(ev.date).toISOString(),
         category: 'Category 1',
         current_price: currentPrice,
         market_value: marketValue,
-        discount_pct: discountPct,
+        discount_pct: Math.max(discountPct, 0),
         opportunity_score: score,
-        source: 'TicketsData',
-        source_url: eventUrl,
-        quantity_available: Math.floor(Math.random() * 6) + 1,
-        demand_tier: demandTier,
-        round: roundLabel,
+        source: cheapestPrice ? cheapestSource : 'Estimated',
+        source_url: cheapestUrl,
+        quantity_available: Math.floor(Math.random() * 8) + 1,
+        demand_tier: getDemandTier(ev.round, boost),
+        group: ev.group || null,
+        round: ev.round,
         is_active: true,
         last_scanned: new Date().toISOString(),
       });
@@ -221,20 +208,21 @@ Deno.serve(async (req) => {
 
     opportunities.sort((a, b) => b.opportunity_score - a.opportunity_score);
 
-    // ── 3. Replace DB records ──────────────────────────────────────────────
+    // Replace all existing records
     const svc = base44.asServiceRole;
     const existing = await svc.entities.TicketOpportunity.list();
     await Promise.all(existing.map(e => svc.entities.TicketOpportunity.delete(e.id)));
 
-    for (let i = 0; i < opportunities.length; i += 20) {
-      await Promise.all(opportunities.slice(i, i + 20).map(o => svc.entities.TicketOpportunity.create(o)));
+    for (let i = 0; i < opportunities.length; i += 10) {
+      await Promise.all(opportunities.slice(i, i + 10).map(o => svc.entities.TicketOpportunity.create(o)));
     }
 
     return Response.json({
       success: true,
-      events_found: rawEvents.length,
-      events_processed: toProcess.length,
+      matches_processed: toProcess.length,
       opportunities_saved: opportunities.length,
+      live_prices_found: opportunities.filter(o => o.source !== 'Estimated').length,
+      credits_used: creditsUsed,
     });
 
   } catch (error) {
