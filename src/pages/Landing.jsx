@@ -41,7 +41,7 @@ const ROADMAP = [
   },
   {
     phase: "Phase 3", status: "upcoming", label: "Coin Launch", tag: "Q4 2026",
-    title: "Community funds the mission.",
+    title: "Where Ghost is going.",
     desc: "A token launch via pump.fun to fund infrastructure, data partnerships, and a full-time dev team. Token holders get early access and governance input.",
     highlight: true,
   },

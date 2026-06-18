@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import NotificationPanel from "./NotificationPanel";
 
-export default function GhostNav({ user }) {
+export default function GhostNav({ user, authLoading = false }) {
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -52,7 +52,9 @@ export default function GhostNav({ user }) {
           </div>
 
           <div className="flex items-center gap-2">
-            {user ? (
+            {authLoading ? (
+              <div className="w-16 h-8 rounded bg-white/5 animate-pulse" />
+            ) : user ? (
               <>
                 <button
                   onClick={() => setNotifOpen(v => !v)}

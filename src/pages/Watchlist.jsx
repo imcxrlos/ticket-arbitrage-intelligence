@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 
 export default function Watchlist() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [watchlistItems, setWatchlistItems] = useState([]);
   const [opportunities, setOpportunities] = useState({});
@@ -15,8 +16,8 @@ export default function Watchlist() {
 
   useEffect(() => {
     base44.auth.me()
-      .then(u => { setUser(u); loadWatchlist(u.id); })
-      .catch(() => setLoading(false));
+      .then(u => { setUser(u); setAuthLoading(false); loadWatchlist(u.id); })
+      .catch(() => { setAuthLoading(false); setLoading(false); });
   }, []);
 
   const loadWatchlist = async (userId) => {
@@ -46,7 +47,7 @@ export default function Watchlist() {
   if (!user && !loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <GhostNav user={null} />
+        <GhostNav user={null} authLoading={authLoading} />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <Lock className="w-8 h-8 text-white/20 mx-auto mb-4" />
@@ -63,7 +64,7 @@ export default function Watchlist() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <GhostNav user={user} />
+      <GhostNav user={user} authLoading={authLoading} />
       <div className="pt-20 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end justify-between mb-8 pt-6">
