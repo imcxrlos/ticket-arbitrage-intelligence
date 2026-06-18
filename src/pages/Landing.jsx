@@ -216,7 +216,14 @@ export default function Landing() {
       {/* Independence statement */}
       <section className="py-12 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-6 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-6 rounded-xl"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
             <div>
               <div className="text-[9px] font-mono text-white/25 uppercase tracking-widest mb-2">Independent Tool</div>
               <p className="text-white/70 text-sm font-mono leading-relaxed max-w-xl">
@@ -231,17 +238,23 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* How it works */}
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            className="mb-16"
+          >
             <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-3">How Ghost Works</p>
             <h2 className="font-display text-4xl font-bold text-white">Three steps to an edge.</h2>
-          </div>
+          </motion.div>
           <div className="grid md:grid-cols-3 gap-0.5">
             {HOW_STEPS.map((step, i) => (
               <motion.div
@@ -264,10 +277,16 @@ export default function Landing() {
       {/* Features */}
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            className="mb-16"
+          >
             <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-3">Intelligence Stack</p>
             <h2 className="font-display text-4xl font-bold text-white">Built for asymmetric advantage.</h2>
-          </div>
+          </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0.5">
             {FEATURES.map((f, i) => (
               <motion.div
@@ -316,7 +335,13 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6">
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="border-t border-white/5 py-8 px-6"
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -328,7 +353,7 @@ export default function Landing() {
             <span className="text-xs text-white/20 font-mono">FIFA World Cup 2026 Arbitrage Intelligence</span>
           </div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }
