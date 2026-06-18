@@ -249,6 +249,50 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* No affiliates */}
+      <section className="py-24 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid lg:grid-cols-2 gap-16 items-center"
+          >
+            <div>
+              <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-3">No Agenda</p>
+              <h2 className="font-display text-4xl font-bold text-white leading-tight mb-5">
+                No affiliates.<br />No commissions.<br />No conflict.
+              </h2>
+              <p className="text-white/40 leading-relaxed text-sm max-w-md">
+                Ghost doesn't earn a cut from any ticket platform. We don't have referral deals, sponsored listings, or financial incentives to push you toward any particular marketplace.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-0.5">
+              {[
+                { label: "Pure signal", desc: "Every opportunity is ranked on price data alone — not who's paying us." },
+                { label: "For the game", desc: "Built by fans who believe great seats shouldn't require a broker relationship." },
+                { label: "You choose where to buy", desc: "We surface the edge. The transaction is entirely yours." },
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="glass-card px-6 py-5 flex items-start gap-4 group hover:border-white/10 transition-all"
+                >
+                  <div className="w-1 h-1 rounded-full bg-white/20 mt-2 shrink-0 group-hover:bg-white/50 transition-colors" />
+                  <div>
+                    <div className="font-display text-sm font-semibold text-white mb-1">{item.label}</div>
+                    <div className="text-xs text-white/35 leading-relaxed">{item.desc}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-32 px-6 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
