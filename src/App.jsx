@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
+import { MatchCenterProvider } from './lib/MatchCenterContext';
 import Landing from './pages/Landing';
 import Scanner from './pages/Scanner';
 import Watchlist from './pages/Watchlist';
@@ -58,11 +59,13 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
+        <MatchCenterProvider>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </MatchCenterProvider>
       </QueryClientProvider>
     </AuthProvider>
   )

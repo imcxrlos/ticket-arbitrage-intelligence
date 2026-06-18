@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Radio } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { useMatchCenter } from "@/lib/MatchCenterContext";
 
 function MatchCard({ game }) {
   const isLive = game.status === "live";
@@ -97,27 +97,9 @@ function MatchCard({ game }) {
 }
 
 export default function LiveScoresPanel() {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { games, loading } = useMatchCenter();
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState("today");
-
-  const fetchGames = async () => {
-    try {
-      const res = await base44.functions.invoke('proxyWC2026', {});
-      setGames(res.data?.games || []);
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGames();
-    const interval = setInterval(fetchGames, 60_000);
-    return () => clearInterval(interval);
-  }, []);
 
   const now = new Date();
   const todayStr = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
