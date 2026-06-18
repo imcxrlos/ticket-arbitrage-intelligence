@@ -183,14 +183,14 @@ export default function Landing() {
                   className="group relative inline-flex items-center justify-center gap-2 h-12 px-7 text-white font-medium rounded transition-all text-sm overflow-hidden"
                   style={{
                     background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(153,69,255,0.35)",
-                    boxShadow: "0 0 18px rgba(153,69,255,0.15), inset 0 0 18px rgba(153,69,255,0.04)"
+                    border: "1px solid rgba(34,197,94,0.35)",
+                    boxShadow: "0 0 18px rgba(34,197,94,0.15), inset 0 0 18px rgba(34,197,94,0.04)"
                   }}
                 >
                   <span className="absolute inset-0 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ boxShadow: "0 0 28px rgba(153,69,255,0.25), inset 0 0 24px rgba(153,69,255,0.07)" }} />
+                    style={{ boxShadow: "0 0 28px rgba(34,197,94,0.25), inset 0 0 24px rgba(34,197,94,0.07)" }} />
                   <span className="relative flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#9945FF" }} />
+                    <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#22c55e" }} />
                     pump.fun
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform opacity-50" />
                   </span>
