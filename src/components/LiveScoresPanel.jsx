@@ -160,10 +160,9 @@ export default function LiveScoresPanel() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-20 bg-[#0f0f0f] rounded-xl shimmer border border-white/[0.04]" />
-                ))}
+              <div className="flex items-center gap-2 py-4 px-1">
+                <div className="w-1 h-1 rounded-full bg-white/20 animate-pulse" />
+                <span className="text-[10px] font-mono text-white/20">Fetching match data...</span>
               </div>
             ) : visibleGames.length === 0 ? (
               <div className="py-8 text-center">
