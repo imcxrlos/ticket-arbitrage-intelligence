@@ -9,7 +9,7 @@ import OpportunityDetailModal from "@/components/OpportunityDetailModal";
 import { useNavigate } from "react-router-dom";
 
 const OPP_CACHE_KEY = "ghost_opportunities";
-const OPP_CACHE_TTL = 60 * 60 * 1000; // 1 hour — matches daily sync cadence
+const OPP_CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 function loadOppCache() {
   try {
