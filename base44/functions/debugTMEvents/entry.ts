@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Debug: test ONE ticketmaster /fetch call and return raw response
-// Costs 1 quota credit — use sparingly
+// Debug: fetch ONE StubHub + ONE SeatGeek call and return raw body structure
+// Uses /fetch quota (huge pool) - safe to run
 
 Deno.serve(async (req) => {
   try {
@@ -14,35 +14,52 @@ Deno.serve(async (req) => {
     const tdUser = Deno.env.get('TICKETSDATA_USERNAME');
     const tdPass = Deno.env.get('TICKETSDATA_PASSWORD');
 
-    const tmUrl = 'https://www.ticketmaster.com/world-cup-final-match-104-east-rutherford-new-jersey-07-19-2026/event/02006239A0E942E6';
+    const targets = [
+      { platform: 'stubhub', event_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/' },
+      { platform: 'seatgeek', event_url: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-19-3-pm/17307574' },
+    ];
 
-    const url = new URL('https://ticketsdata.com/fetch');
-    url.searchParams.set('username', tdUser);
-    url.searchParams.set('password', tdPass);
-    url.searchParams.set('platform', 'ticketmaster');
-    url.searchParams.set('event_url', tmUrl);
+    const results = [];
 
-    const res = await fetch(url.toString());
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = { raw: text.substring(0, 500) }; }
+    for (const t of targets) {
+      const url = new URL('https://ticketsdata.com/fetch');
+      url.searchParams.set('username', tdUser);
+      url.searchParams.set('password', tdPass);
+      url.searchParams.set('platform', t.platform);
+      url.searchParams.set('event_url', t.event_url);
 
-    // Return the top-level keys and body keys so we know the structure without dumping everything
-    const bodyKeys = data?.body ? Object.keys(data.body) : [];
-    const embeddedKeys = data?.body?._embedded ? Object.keys(data.body._embedded) : [];
-    const offerSample = data?.body?._embedded?.offer?.slice(0, 2) ?? null;
-    const itemsSample = Array.isArray(data?.body?.items) ? data.body.items.slice(0, 2) : null;
+      const res = await fetch(url.toString());
+      const data = await res.json();
 
-    return Response.json({
-      http_status: res.status,
-      top_level_keys: Object.keys(data || {}),
-      api_status: data?.status,
-      body_keys: bodyKeys,
-      embedded_keys: embeddedKeys,
-      offer_sample: offerSample,
-      items_sample: itemsSample,
-      quota_remaining: data?.quota_remaining ?? null,
-    });
+      const body = data?.body;
+      const bodyKeys = body ? Object.keys(body) : [];
+
+      // Drill into every possible nested key to find where listings live
+      let sample = null;
+      if (body) {
+        // Try common paths
+        if (Array.isArray(body.items)) sample = { path: 'body.items', type: 'array', length: body.items.length, first: body.items[0] };
+        else if (body.items && Array.isArray(body.items.offers)) sample = { path: 'body.items.offers', type: 'array', length: body.items.offers.length, first: body.items.offers[0] };
+        else if (body._embedded?.offer) sample = { path: 'body._embedded.offer', type: 'array', length: body._embedded.offer.length, first: body._embedded.offer[0] };
+        else if (Array.isArray(body.listings)) sample = { path: 'body.listings', type: 'array', length: body.listings.length, first: body.listings[0] };
+        else if (Array.isArray(body.events)) sample = { path: 'body.events', type: 'array', length: body.events.length, first: body.events[0] };
+        else {
+          // dump full body if small
+          sample = { path: 'unknown', body_keys: bodyKeys, raw: JSON.stringify(body).slice(0, 800) };
+        }
+      }
+
+      results.push({
+        platform: t.platform,
+        http_status: res.status,
+        api_status: data?.status,
+        quota_remaining: data?.quota_remaining,
+        body_keys: bodyKeys,
+        sample,
+      });
+    }
+
+    return Response.json({ results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
