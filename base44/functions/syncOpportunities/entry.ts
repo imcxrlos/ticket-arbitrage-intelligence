@@ -1,20 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
- * Ghost — syncOpportunities (Market Intelligence Edition)
+ * Ghost — syncOpportunities
  *
- * Uses TicketsData /match endpoint — 1 credit per event, fetches ALL platforms
- * simultaneously and returns full cross-market arbitrage intelligence.
+ * TWO-TRACK STRATEGY (credit-efficient):
  *
- * 3 reports used for the 3 highest-value WC2026 matches:
- *   1. Final — MetLife Stadium, East Rutherford NJ (Jul 19)
- *   2. Semi-Final 1 — AT&T Stadium, Arlington TX (Jul 14)
- *   3. Semi-Final 2 — Mercedes-Benz Stadium, Atlanta GA (Jul 15)
+ * TRACK A — Market Intelligence (/match): 1 credit per event.
+ *   Used ONLY for the 3 highest-value matches (Final + 2 Semi-Finals).
+ *   Returns full cross-market intelligence from TicketsData.
+ *
+ * TRACK B — Engine Arbitrage (/fetch): FREE / low-cost per event.
+ *   Used for up to 15 additional WC2026 matches (Quarter-Finals, R16, etc.)
+ *   We fetch raw inventory from multiple platforms independently and run
+ *   our own arbitrage engine to compute spreads, scores, and signals.
+ *   No Market Intelligence credits consumed.
  */
 
 const TD_BASE = 'https://ticketsdata.com';
 
-// 3 premium WC2026 matches with confirmed StubHub event URLs
+// TRACK A — Premium matches only (1 credit each via /match)
 const PREMIUM_MATCHES = [
   {
     stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
@@ -42,6 +46,77 @@ const PREMIUM_MATCHES = [
   },
 ];
 
+// TRACK B — Broader matches via /fetch (our own arbitrage engine, no credits burned)
+// Platforms we hit independently: stubhub, ticketmaster, seatgeek, vividseats
+const ENGINE_MATCHES = [
+  {
+    match: 'World Cup Quarter-Final 1',
+    round: 'Quarter-Final',
+    stadium: 'SoFi Stadium',
+    city: 'Los Angeles, CA',
+    match_date: '2026-07-09T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/',
+  },
+  {
+    match: 'World Cup Quarter-Final 2',
+    round: 'Quarter-Final',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-07-10T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/',
+  },
+  {
+    match: 'World Cup Quarter-Final 3',
+    round: 'Quarter-Final',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-07-11T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/',
+  },
+  {
+    match: 'World Cup Quarter-Final 4',
+    round: 'Quarter-Final',
+    stadium: 'Mercedes-Benz Stadium',
+    city: 'Atlanta, GA',
+    match_date: '2026-07-12T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/',
+  },
+  {
+    match: 'World Cup Round of 16 — A',
+    round: 'Round of 16',
+    stadium: 'Arrowhead Stadium',
+    city: 'Kansas City, MO',
+    match_date: '2026-07-01T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-kansas-city-tickets-7-1-2026/event/153021550/',
+  },
+  {
+    match: 'World Cup Round of 16 — B',
+    round: 'Round of 16',
+    stadium: 'Levi\'s Stadium',
+    city: 'Santa Clara, CA',
+    match_date: '2026-07-02T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-santa-clara-tickets-7-2-2026/event/153020460/',
+  },
+  {
+    match: 'World Cup Round of 16 — C',
+    round: 'Round of 16',
+    stadium: 'Rose Bowl',
+    city: 'Pasadena, CA',
+    match_date: '2026-07-03T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-pasadena-tickets-7-3-2026/event/153020461/',
+  },
+  {
+    match: 'World Cup Round of 16 — D',
+    round: 'Round of 16',
+    stadium: 'Hard Rock Stadium',
+    city: 'Miami, FL',
+    match_date: '2026-07-04T20:00:00',
+    stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-4-2026/event/153023910/',
+  },
+];
+
+// ── TRACK A: Market Intelligence via /match ──────────────────────────────────
+
 async function tdMatch(username, password, eventUrl) {
   const url = new URL(`${TD_BASE}/match`);
   url.searchParams.set('username', username);
@@ -57,16 +132,13 @@ async function tdMatch(username, password, eventUrl) {
   return data;
 }
 
-function extractOpportunity(matchData, meta) {
+function extractFromIntelligence(matchData, meta) {
   const intel = matchData?.fetch_results?.intelligence;
-  const snapshot = intel?.cross_market_snapshot;
   const summaries = intel?.market_summaries || {};
   const sectionArb = intel?.section_arbitrage || [];
-  const recs = intel?.recommendations || {};
 
-  if (!snapshot && !Object.keys(summaries).length) return null;
+  if (!Object.keys(summaries).length) return null;
 
-  // Build per-platform summaries array
   const platformList = Object.entries(summaries).map(([platform, s]) => ({
     platform,
     min_price: s.cheapest_entry_total ?? s.cheapest_entry_prefee ?? s.price_stats?.min ?? 0,
@@ -77,12 +149,82 @@ function extractOpportunity(matchData, meta) {
 
   if (!platformList.length) return null;
 
+  return buildOpportunity(platformList, meta, sectionArb, 'intelligence');
+}
+
+// ── TRACK B: Raw fetch via /fetch + our own engine ───────────────────────────
+
+// Platforms we query independently via /fetch (free)
+const FETCH_PLATFORMS = ['stubhub', 'ticketmaster', 'seatgeek', 'vividseats'];
+
+async function tdFetch(username, password, eventUrl, platform) {
+  const url = new URL(`${TD_BASE}/fetch`);
+  url.searchParams.set('username', username);
+  url.searchParams.set('password', password);
+  url.searchParams.set('event_url', eventUrl);
+  url.searchParams.set('platform', platform);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  if (data.status === 'error' || !data.tickets?.length) return null;
+
+  return data;
+}
+
+function parseFetchData(platform, data, sourceUrl) {
+  const tickets = data?.tickets || [];
+  if (!tickets.length) return null;
+
+  const prices = tickets
+    .map(t => t.price_with_fees ?? t.price ?? 0)
+    .filter(p => p > 0)
+    .sort((a, b) => a - b);
+
+  if (!prices.length) return null;
+
+  const min_price = prices[0];
+  const avg_price = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+
+  return {
+    platform,
+    min_price,
+    avg_price,
+    listing_count: tickets.length,
+    url: sourceUrl,
+  };
+}
+
+async function fetchAllPlatforms(username, password, meta) {
+  const results = [];
+
+  // Sequential to avoid hammering the API
+  for (const platform of FETCH_PLATFORMS) {
+    try {
+      const data = await tdFetch(username, password, meta.stubhub_url, platform);
+      if (!data) continue;
+
+      const parsed = parseFetchData(platform, data, meta.stubhub_url);
+      if (parsed) results.push(parsed);
+    } catch (err) {
+      console.log(`[Ghost/Engine] ${platform} fetch failed for ${meta.match}: ${err.message}`);
+    }
+  }
+
+  return results;
+}
+
+// ── Shared arbitrage engine (used by both tracks) ────────────────────────────
+
+function buildOpportunity(platformList, meta, sectionArb = [], source = 'engine') {
   platformList.sort((a, b) => a.min_price - b.min_price);
   const cheapest = platformList[0];
   const priciest = platformList[platformList.length - 1];
 
   const currentPrice = cheapest.min_price;
   const highestPrice = priciest.min_price;
+
   const allAvgs = platformList.filter(p => p.avg_price > 0).map(p => p.avg_price);
   const marketAvg = allAvgs.length
     ? Math.round(allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length)
@@ -93,7 +235,6 @@ function extractOpportunity(matchData, meta) {
     ? Math.round(((highestPrice - currentPrice) / highestPrice) * 100)
     : 0;
 
-  // Find best section arbitrage spread if available
   let topSection = null;
   if (sectionArb.length > 0) {
     const sorted = [...sectionArb].sort((a, b) => (b.spread_pct ?? 0) - (a.spread_pct ?? 0));
@@ -110,7 +251,6 @@ function extractOpportunity(matchData, meta) {
 
   const demandMap = { 'Final': 'Ultra High', 'Semi-Final': 'Ultra High', 'Quarter-Final': 'High', 'Round of 16': 'Medium', 'Round of 32': 'Medium', 'Group Stage': 'Low' };
 
-  // Enhanced market summaries with section arb data
   const marketSummariesPayload = platformList.map(p => ({
     platform: p.platform,
     min_price: p.min_price,
@@ -119,11 +259,7 @@ function extractOpportunity(matchData, meta) {
     url: p.url,
   }));
 
-  if (topSection) {
-    marketSummariesPayload.push({
-      section_arbitrage: topSection,
-    });
-  }
+  if (topSection) marketSummariesPayload.push({ section_arbitrage: topSection });
 
   return {
     match: meta.match,
@@ -152,6 +288,8 @@ function extractOpportunity(matchData, meta) {
   };
 }
 
+// ── Main handler ─────────────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -174,28 +312,49 @@ Deno.serve(async (req) => {
     const errors = [];
     let reportsRemaining = null;
 
-    // Process sequentially to avoid rate-limiting — 1 report per match
+    // ── TRACK A: Market Intelligence for premium matches ──
+    console.log('[Ghost] === TRACK A: Market Intelligence ===');
     for (const matchMeta of PREMIUM_MATCHES) {
       try {
-        console.log(`[Ghost] Fetching /match for: ${matchMeta.match}`);
+        console.log(`[Ghost/Intel] Fetching /match: ${matchMeta.match}`);
         const matchData = await tdMatch(tdUser, tdPass, matchMeta.stubhub_url);
 
-        // Capture remaining quota from last response
         if (matchData.reports_remaining !== undefined) {
           reportsRemaining = matchData.reports_remaining;
         }
 
-        const opp = extractOpportunity(matchData, matchMeta);
+        const opp = extractFromIntelligence(matchData, matchMeta);
         if (!opp) {
-          errors.push({ match: matchMeta.match, reason: 'no_price_data_in_response' });
+          errors.push({ match: matchMeta.match, reason: 'no_price_data_in_response', track: 'A' });
           continue;
         }
 
         opportunities.push(opp);
-        console.log(`[Ghost] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price} (${opp.best_platform}), spread ${opp.vs_highest_pct}%`);
+        console.log(`[Ghost/Intel] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price}, spread ${opp.vs_highest_pct}%`);
       } catch (err) {
-        errors.push({ match: matchMeta.match, error: err.message });
-        console.error(`[Ghost] Error for ${matchMeta.match}: ${err.message}`);
+        errors.push({ match: matchMeta.match, error: err.message, track: 'A' });
+        console.error(`[Ghost/Intel] Error for ${matchMeta.match}: ${err.message}`);
+      }
+    }
+
+    // ── TRACK B: Engine arbitrage for broader matches ──
+    console.log('[Ghost] === TRACK B: Engine Arbitrage ===');
+    for (const matchMeta of ENGINE_MATCHES) {
+      try {
+        console.log(`[Ghost/Engine] Fetching platforms for: ${matchMeta.match}`);
+        const platformList = await fetchAllPlatforms(tdUser, tdPass, matchMeta);
+
+        if (platformList.length < 2) {
+          errors.push({ match: matchMeta.match, reason: `only_${platformList.length}_platform(s)_found`, track: 'B' });
+          continue;
+        }
+
+        const opp = buildOpportunity(platformList, matchMeta);
+        opportunities.push(opp);
+        console.log(`[Ghost/Engine] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price}, spread ${opp.vs_highest_pct}%`);
+      } catch (err) {
+        errors.push({ match: matchMeta.match, error: err.message, track: 'B' });
+        console.error(`[Ghost/Engine] Error for ${matchMeta.match}: ${err.message}`);
       }
     }
 
@@ -214,12 +373,15 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       opportunities_saved: opportunities.length,
+      track_a_count: opportunities.filter(o => PREMIUM_MATCHES.some(m => m.match === o.match)).length,
+      track_b_count: opportunities.filter(o => ENGINE_MATCHES.some(m => m.match === o.match)).length,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
       errors: errors.length,
       error_list: errors,
       reports_remaining: reportsRemaining,
       opportunities: opportunities.map(o => ({
         match: o.match,
+        track: PREMIUM_MATCHES.some(m => m.match === o.match) ? 'A (Intelligence)' : 'B (Engine)',
         platforms: o.platforms_compared,
         best_price: o.current_price,
         best_platform: o.best_platform,
