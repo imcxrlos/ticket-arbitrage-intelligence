@@ -14,7 +14,7 @@ function MatchCard({ game }) {
     ? `Group ${game.group} · MD${game.matchday}`
     : (game.type || "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-  const timeDisplay = isLive && game.time_elapsed ? `${game.time_elapsed}'`
+  const timeDisplay = isLive ? (game.time_elapsed ? `${game.time_elapsed}'` : "LIVE")
     : isHalfTime ? "HT"
     : isFinished ? "FT"
     : game.local_date?.split(" ")[1] || "";
@@ -102,7 +102,7 @@ function MatchCard({ game }) {
 
 export default function LiveScoresPanel() {
   const { games, loading } = useMatchCenter();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("today");
 
   const now = new Date();

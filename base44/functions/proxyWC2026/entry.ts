@@ -10,26 +10,35 @@ Deno.serve(async (req) => {
     const games = data.games || [];
 
     // Return only fields we need — keeps payload small and clean
-    const clean = games.map(g => ({
-      id: g.id,
-      home: g.home_team_name_en,
-      away: g.away_team_name_en,
-      home_score: g.home_score === "null" || g.home_score == null ? null : Number(g.home_score),
-      away_score: g.away_score === "null" || g.away_score == null ? null : Number(g.away_score),
-      home_scorers: parseScorers(g.home_scorers),
-      away_scorers: parseScorers(g.away_scorers),
-      group: g.group,
-      matchday: g.matchday,
-      type: g.type,
-      local_date: g.local_date,
-      // Normalize status: "live" | "halftime" | "finished" | "upcoming"
-      status: g.finished === "TRUE" ? "finished"
-        : (g.time_elapsed === "HT" || g.time_elapsed === "Half Time") ? "halftime"
-        : (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? "live"
-        : "upcoming",
-      time_elapsed: (g.time_elapsed === "HT" || g.time_elapsed === "Half Time") ? "HT"
-        : (/^\d+(\+\d+)?$/.test(g.time_elapsed || "")) ? g.time_elapsed : null,
-    }));
+    const clean = games.map(g => {
+      const rawTime = String(g.time_elapsed || "").trim();
+      const normalizedTime = rawTime.replace(/[’']/g, "");
+      const hasClock = /^\d+(\+\d+)?$/.test(normalizedTime);
+      const isFinished = g.finished === "TRUE" || g.finished === true;
+      const isHalfTime = rawTime === "HT" || rawTime === "Half Time";
+      const homeScore = g.home_score === "null" || g.home_score == null ? null : Number(g.home_score);
+      const awayScore = g.away_score === "null" || g.away_score == null ? null : Number(g.away_score);
+      const homeScorers = parseScorers(g.home_scorers);
+      const awayScorers = parseScorers(g.away_scorers);
+      const hasLiveSignals = homeScore !== null || awayScore !== null || homeScorers.length > 0 || awayScorers.length > 0;
+
+      return {
+        id: g.id,
+        home: g.home_team_name_en,
+        away: g.away_team_name_en,
+        home_score: homeScore,
+        away_score: awayScore,
+        home_scorers: homeScorers,
+        away_scorers: awayScorers,
+        group: g.group,
+        matchday: g.matchday,
+        type: g.type,
+        local_date: g.local_date,
+        // Normalize status: "live" | "halftime" | "finished" | "upcoming"
+        status: isFinished ? "finished" : isHalfTime ? "halftime" : (hasClock || hasLiveSignals) ? "live" : "upcoming",
+        time_elapsed: isHalfTime ? "HT" : hasClock ? normalizedTime : null,
+      };
+    });
 
     return Response.json({ games: clean });
   } catch (error) {
