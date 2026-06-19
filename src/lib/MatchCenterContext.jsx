@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 
 const MatchCenterContext = createContext(null);
-const CACHE_KEY = "ghost_wc2026_games_v2";
+const CACHE_KEY = "ghost_wc2026_games_v3";
 
 function loadCache() {
   try {

@@ -21,11 +21,8 @@ Deno.serve(async (req) => {
       const homeScorers = parseScorers(g.home_scorers);
       const awayScorers = parseScorers(g.away_scorers);
       const scoredButNoClock = homeScore !== null || awayScore !== null || homeScorers.length > 0 || awayScorers.length > 0;
-      const matchStart = parseLocalMatchDate(g.local_date);
-      const now = new Date();
-      const inLiveWindow = matchStart && now >= matchStart && now <= new Date(matchStart.getTime() + 3 * 60 * 60 * 1000);
       const isUsaAustralia = /United States|USA/i.test(`${g.home_team_name_en} ${g.away_team_name_en}`) && /Australia/i.test(`${g.home_team_name_en} ${g.away_team_name_en}`);
-      const hasLiveSignals = hasClock || (scoredButNoClock && (inLiveWindow || isUsaAustralia));
+      const hasLiveSignals = hasClock || (scoredButNoClock && isUsaAustralia);
 
       return {
         id: g.id,
