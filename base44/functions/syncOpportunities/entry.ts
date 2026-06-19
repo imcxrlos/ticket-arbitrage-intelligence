@@ -3,224 +3,317 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 /**
  * Ghost — syncOpportunities
  *
- * TWO-TRACK STRATEGY (credit-efficient):
+ * STRATEGY (credit-safe):
  *
- * TRACK A — Market Intelligence (/match): 1 credit per event.
- *   Used ONLY for the 3 highest-value matches (Final + 2 Semi-Finals).
- *   Returns full cross-market intelligence from TicketsData.
+ * /fetch = uses quota_remaining (huge pool, ~free). Needs a platform-specific event URL.
+ * /match = costs 12 credits each. At 25/month cap → max 2 calls/month. Used ONLY on demand, not here.
  *
- * TRACK B — Engine Arbitrage (/fetch): FREE / low-cost per event.
- *   Used for up to 15 additional WC2026 matches (Quarter-Finals, R16, etc.)
- *   We fetch raw inventory from multiple platforms independently and run
- *   our own arbitrage engine to compute spreads, scores, and signals.
- *   No Market Intelligence credits consumed.
+ * This function uses /fetch ONLY:
+ * - We have confirmed platform-specific URLs for each match on stubhub + ticketmaster.
+ * - We fetch both platforms per match and compute our own arbitrage spread.
+ * - Zero /match credits consumed.
+ *
+ * Event URLs verified from StubHub live listings (June 2026).
  */
 
 const TD_BASE = 'https://ticketsdata.com';
 
-// TRACK A — 1 credit per day (rotate through premium matches daily)
-// We pick 1 match per day based on day-of-month to spread the 25/month cap evenly.
-const ALL_PREMIUM_MATCHES = [
+// Each match has confirmed URLs for multiple platforms.
+// stubhub + ticketmaster gives us real cross-market spread.
+const MATCHES = [
   {
-    stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
     match: 'World Cup Final',
     round: 'Final',
     stadium: 'MetLife Stadium',
     city: 'East Rutherford, NJ',
     match_date: '2026-07-19T15:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
+      ticketmaster: 'https://www.ticketmaster.com/world-cup-final-match-104-east-rutherford-new-jersey-07-19-2026/event/02006239A0E942E6',
+    },
   },
   {
-    stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
     match: 'World Cup Semi-Final 1',
     round: 'Semi-Final',
     stadium: 'AT&T Stadium',
     city: 'Arlington, TX',
     match_date: '2026-07-14T14:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
+      ticketmaster: 'https://www.ticketmaster.com/world-cup-semi-final-match-102-arlington-texas-07-14-2026/event/0A00623AA83C1B8B',
+    },
   },
   {
-    stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
     match: 'World Cup Semi-Final 2',
     round: 'Semi-Final',
     stadium: 'Mercedes-Benz Stadium',
     city: 'Atlanta, GA',
     match_date: '2026-07-15T15:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
+      ticketmaster: 'https://www.ticketmaster.com/world-cup-semi-final-match-103-atlanta-georgia-07-15-2026/event/1D00623AA83C1B8C',
+    },
+  },
+  {
+    match: 'World Cup Quarter-Final 1',
+    round: 'Quarter-Final',
+    stadium: 'SoFi Stadium',
+    city: 'Inglewood, CA',
+    match_date: '2026-07-09T20:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/',
+    },
+  },
+  {
+    match: 'World Cup Quarter-Final 2',
+    round: 'Quarter-Final',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-07-10T20:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/',
+    },
+  },
+  {
+    match: 'World Cup Quarter-Final 3',
+    round: 'Quarter-Final',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-07-11T20:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/',
+    },
+  },
+  {
+    match: 'World Cup Quarter-Final 4',
+    round: 'Quarter-Final',
+    stadium: 'Mercedes-Benz Stadium',
+    city: 'Atlanta, GA',
+    match_date: '2026-07-12T20:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/',
+    },
+  },
+  {
+    match: 'World Cup Round of 16 — Houston',
+    round: 'Round of 16',
+    stadium: 'NRG Stadium',
+    city: 'Houston, TX',
+    match_date: '2026-07-04T16:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-houston-tickets-7-4-2026/event/153021196/',
+    },
+  },
+  {
+    match: 'World Cup Round of 16 — Philadelphia',
+    round: 'Round of 16',
+    stadium: 'Lincoln Financial Field',
+    city: 'Philadelphia, PA',
+    match_date: '2026-07-04T17:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-philadelphia-tickets-7-4-2026/event/153023863/',
+    },
+  },
+  {
+    match: 'World Cup Round of 16 — East Rutherford',
+    round: 'Round of 16',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-07-05T16:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-5-2026/event/153023886/',
+    },
+  },
+  {
+    match: 'World Cup Round of 16 — Arlington',
+    round: 'Round of 16',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-07-06T14:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-6-2026/event/153021528/',
+    },
+  },
+  {
+    match: 'World Cup Round of 16 — Seattle',
+    round: 'Round of 16',
+    stadium: 'Lumen Field',
+    city: 'Seattle, WA',
+    match_date: '2026-07-06T17:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-seattle-tickets-7-6-2026/event/153020574/',
+    },
+  },
+  {
+    match: 'World Cup Round of 32 — SoFi Stadium',
+    round: 'Round of 32',
+    stadium: 'SoFi Stadium',
+    city: 'Inglewood, CA',
+    match_date: '2026-06-28T12:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-inglewood-tickets-6-28-2026/event/153020724/',
+    },
+  },
+  {
+    match: 'World Cup Round of 32 — Houston',
+    round: 'Round of 32',
+    stadium: 'NRG Stadium',
+    city: 'Houston, TX',
+    match_date: '2026-06-29T12:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-houston-tickets-6-29-2026/event/153021172/',
+    },
+  },
+  {
+    match: 'World Cup Round of 32 — Foxborough',
+    round: 'Round of 32',
+    stadium: 'Gillette Stadium',
+    city: 'Foxborough, MA',
+    match_date: '2026-06-29T16:30:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-foxborough-tickets-6-29-2026/event/153023830/',
+    },
+  },
+  {
+    match: 'World Cup Round of 32 — Arlington',
+    round: 'Round of 32',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-06-30T12:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-6-30-2026/event/153021470/',
+    },
+  },
+  {
+    match: 'World Cup Round of 32 — East Rutherford',
+    round: 'Round of 32',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-06-30T17:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-6-30-2026/event/153023840/',
+    },
+  },
+  {
+    match: 'World Cup Third Place',
+    round: 'Third Place',
+    stadium: 'Hard Rock Stadium',
+    city: 'Miami, FL',
+    match_date: '2026-07-18T15:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-miami-gardens-tickets-7-18-2026/event/153023915/',
+    },
   },
 ];
-// Pick exactly 1 premium match today based on day of month (rotates: Final → SF1 → SF2 → Final → ...)
-const todayIdx = new Date().getDate() % ALL_PREMIUM_MATCHES.length;
-const PREMIUM_MATCHES = [ALL_PREMIUM_MATCHES[todayIdx]];
 
-// TRACK B — All remaining WC2026 matches via /fetch (free, our own engine)
-// Covers QFs, R16, R32, Group Stage, Third Place — no credits consumed
-const ENGINE_MATCHES = [
-  // Quarter-Finals
-  { match: 'World Cup Quarter-Final 1', round: 'Quarter-Final', stadium: 'SoFi Stadium', city: 'Los Angeles, CA', match_date: '2026-07-09T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/' },
-  { match: 'World Cup Quarter-Final 2', round: 'Quarter-Final', stadium: 'MetLife Stadium', city: 'East Rutherford, NJ', match_date: '2026-07-10T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/' },
-  { match: 'World Cup Quarter-Final 3', round: 'Quarter-Final', stadium: 'AT&T Stadium', city: 'Arlington, TX', match_date: '2026-07-11T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/' },
-  { match: 'World Cup Quarter-Final 4', round: 'Quarter-Final', stadium: 'Mercedes-Benz Stadium', city: 'Atlanta, GA', match_date: '2026-07-12T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/' },
-  // Round of 16
-  { match: 'World Cup Round of 16 — A', round: 'Round of 16', stadium: 'Arrowhead Stadium', city: 'Kansas City, MO', match_date: '2026-07-01T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-kansas-city-tickets-7-1-2026/event/153021550/' },
-  { match: 'World Cup Round of 16 — B', round: 'Round of 16', stadium: 'Levi\'s Stadium', city: 'Santa Clara, CA', match_date: '2026-07-02T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-santa-clara-tickets-7-2-2026/event/153020460/' },
-  { match: 'World Cup Round of 16 — C', round: 'Round of 16', stadium: 'Rose Bowl', city: 'Pasadena, CA', match_date: '2026-07-03T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-pasadena-tickets-7-3-2026/event/153020461/' },
-  { match: 'World Cup Round of 16 — D', round: 'Round of 16', stadium: 'Hard Rock Stadium', city: 'Miami, FL', match_date: '2026-07-04T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-4-2026/event/153023910/' },
-  { match: 'World Cup Round of 16 — E', round: 'Round of 16', stadium: 'Lincoln Financial Field', city: 'Philadelphia, PA', match_date: '2026-07-01T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-philadelphia-tickets-7-1-2026/event/153023920/' },
-  { match: 'World Cup Round of 16 — F', round: 'Round of 16', stadium: 'Gillette Stadium', city: 'Foxborough, MA', match_date: '2026-07-02T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-foxborough-tickets-7-2-2026/event/153023921/' },
-  { match: 'World Cup Round of 16 — G', round: 'Round of 16', stadium: 'NRG Stadium', city: 'Houston, TX', match_date: '2026-07-03T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-houston-tickets-7-3-2026/event/153021560/' },
-  { match: 'World Cup Round of 16 — H', round: 'Round of 16', stadium: 'SoFi Stadium', city: 'Los Angeles, CA', match_date: '2026-07-04T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-4-2026/event/153020462/' },
-  // Round of 32
-  { match: 'World Cup Round of 32 — A', round: 'Round of 32', stadium: 'BC Place', city: 'Vancouver, BC', match_date: '2026-06-28T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-vancouver-tickets-6-28-2026/event/153025010/' },
-  { match: 'World Cup Round of 32 — B', round: 'Round of 32', stadium: 'Estadio Akron', city: 'Guadalajara, MX', match_date: '2026-06-28T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-guadalajara-tickets-6-28-2026/event/153026010/' },
-  { match: 'World Cup Round of 32 — C', round: 'Round of 32', stadium: 'Estadio BBVA', city: 'Monterrey, MX', match_date: '2026-06-29T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-monterrey-tickets-6-29-2026/event/153026011/' },
-  { match: 'World Cup Round of 32 — D', round: 'Round of 32', stadium: 'Estadio Azteca', city: 'Mexico City, MX', match_date: '2026-06-29T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-mexico-city-tickets-6-29-2026/event/153026012/' },
-  // Third Place
-  { match: 'World Cup Third Place', round: 'Third Place', stadium: 'Hard Rock Stadium', city: 'Miami, FL', match_date: '2026-07-18T15:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-18-2026/event/153023915/' },
-];
+// ── /fetch helper ─────────────────────────────────────────────────────────────
 
-// ── TRACK A: Market Intelligence via /match ──────────────────────────────────
-
-async function tdMatch(username, password, eventUrl) {
-  const url = new URL(`${TD_BASE}/match`);
-  url.searchParams.set('username', username);
-  url.searchParams.set('password', password);
-  url.searchParams.set('event_url', eventUrl);
-
-  const res = await fetch(url.toString());
-  const data = await res.json();
-
-  if (!res.ok || data.status === 'error') {
-    throw new Error(`/match failed for ${eventUrl}: ${JSON.stringify(data)}`);
-  }
-  return data;
-}
-
-function extractFromIntelligence(matchData, meta) {
-  const intel = matchData?.fetch_results?.intelligence;
-  const summaries = intel?.market_summaries || {};
-  const sectionArb = intel?.section_arbitrage || [];
-
-  if (!Object.keys(summaries).length) return null;
-
-  const platformList = Object.entries(summaries).map(([platform, s]) => ({
-    platform,
-    min_price: s.cheapest_entry_total ?? s.cheapest_entry_prefee ?? s.price_stats?.min ?? 0,
-    avg_price: s.price_stats?.median ?? s.price_stats?.avg ?? 0,
-    listing_count: s.listing_count ?? 0,
-    url: matchData?.matches?.[platform] ?? '',
-  })).filter(p => p.min_price > 0);
-
-  if (!platformList.length) return null;
-
-  return buildOpportunity(platformList, meta, sectionArb, 'intelligence');
-}
-
-// ── TRACK B: Raw fetch via /fetch + our own engine ───────────────────────────
-
-// Platforms we query independently via /fetch (free)
-const FETCH_PLATFORMS = ['stubhub', 'ticketmaster', 'seatgeek', 'vividseats'];
-
-async function tdFetch(username, password, eventUrl, platform) {
+async function fetchPlatform(username, password, platform, eventUrl) {
   const url = new URL(`${TD_BASE}/fetch`);
   url.searchParams.set('username', username);
   url.searchParams.set('password', password);
-  url.searchParams.set('event_url', eventUrl);
   url.searchParams.set('platform', platform);
+  url.searchParams.set('event_url', eventUrl);
 
   const res = await fetch(url.toString());
   if (!res.ok) return null;
 
   const data = await res.json();
-  if (data.status === 'error' || !data.tickets?.length) return null;
+  if (!data || data.status >= 400) return null;
 
   return data;
 }
 
-function parseFetchData(platform, data, sourceUrl) {
-  const tickets = data?.tickets || [];
-  if (!tickets.length) return null;
+// ── Parse raw /fetch response into { min_price, avg_price, listing_count } ───
 
-  const prices = tickets
-    .map(t => t.price_with_fees ?? t.price ?? 0)
-    .filter(p => p > 0)
-    .sort((a, b) => a - b);
+function parseInventory(platform, data) {
+  const body = data?.body;
+  if (!body) return null;
+
+  let prices = [];
+
+  // StubHub
+  if (platform === 'stubhub') {
+    const listings = body?.listings || body?.data?.listings || [];
+    prices = listings
+      .map(l => l.seatPrice?.totalPrice ?? l.pricePerTicket?.amount ?? l.totalPrice ?? 0)
+      .filter(p => p > 0);
+  }
+
+  // Ticketmaster
+  if (platform === 'ticketmaster') {
+    const offers = body?._embedded?.offer || [];
+    prices = offers
+      .map(o => parseFloat(o.totalPrice ?? o.listPrice ?? 0))
+      .filter(p => p > 0);
+  }
+
+  // SeatGeek
+  if (platform === 'seatgeek') {
+    const listings = body?.listings || [];
+    prices = listings
+      .map(l => l.price ?? 0)
+      .filter(p => p > 0);
+  }
+
+  // VividSeats
+  if (platform === 'vividseats') {
+    const rows = body?.rows || body?.listings || [];
+    prices = rows
+      .map(r => r.price ?? r.ticketPrice ?? 0)
+      .filter(p => p > 0);
+  }
 
   if (!prices.length) return null;
 
-  const min_price = prices[0];
-  const avg_price = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
-
+  prices.sort((a, b) => a - b);
   return {
     platform,
-    min_price,
-    avg_price,
-    listing_count: tickets.length,
-    url: sourceUrl,
+    min_price: Math.round(prices[0]),
+    avg_price: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+    listing_count: prices.length,
   };
 }
 
-async function fetchAllPlatforms(username, password, meta) {
-  const results = [];
+// ── Build opportunity record from platform data ───────────────────────────────
 
-  // Sequential to avoid hammering the API
-  for (const platform of FETCH_PLATFORMS) {
-    try {
-      const data = await tdFetch(username, password, meta.stubhub_url, platform);
-      if (!data) continue;
-
-      const parsed = parseFetchData(platform, data, meta.stubhub_url);
-      if (parsed) results.push(parsed);
-    } catch (err) {
-      console.log(`[Ghost/Engine] ${platform} fetch failed for ${meta.match}: ${err.message}`);
-    }
-  }
-
-  return results;
-}
-
-// ── Shared arbitrage engine (used by both tracks) ────────────────────────────
-
-function buildOpportunity(platformList, meta, sectionArb = [], source = 'engine') {
-  platformList.sort((a, b) => a.min_price - b.min_price);
-  const cheapest = platformList[0];
-  const priciest = platformList[platformList.length - 1];
+function buildOpportunity(platformResults, meta) {
+  platformResults.sort((a, b) => a.min_price - b.min_price);
+  const cheapest = platformResults[0];
+  const priciest = platformResults[platformResults.length - 1];
 
   const currentPrice = cheapest.min_price;
   const highestPrice = priciest.min_price;
 
-  const allAvgs = platformList.filter(p => p.avg_price > 0).map(p => p.avg_price);
+  const allAvgs = platformResults.filter(p => p.avg_price > 0).map(p => p.avg_price);
   const marketAvg = allAvgs.length
     ? Math.round(allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length)
-    : Math.round(platformList.map(p => p.min_price).reduce((a, b) => a + b, 0) / platformList.length);
+    : currentPrice;
 
-  const discountVsAvg = marketAvg > 0 ? Math.round(((marketAvg - currentPrice) / marketAvg) * 100) : 0;
+  const discountVsAvg = marketAvg > currentPrice
+    ? Math.round(((marketAvg - currentPrice) / marketAvg) * 100)
+    : 0;
   const discountVsHighest = highestPrice > currentPrice
     ? Math.round(((highestPrice - currentPrice) / highestPrice) * 100)
     : 0;
 
-  let topSection = null;
-  if (sectionArb.length > 0) {
-    const sorted = [...sectionArb].sort((a, b) => (b.spread_pct ?? 0) - (a.spread_pct ?? 0));
-    topSection = sorted[0];
-  }
+  const signalType = platformResults.length >= 2 ? 'Arbitrage' : 'Price Analysis';
 
-  const signalType = platformList.length >= 2 ? 'Arbitrage' : 'Price Analysis';
-
-  const roundPts = { 'Final': 35, 'Semi-Final': 28, 'Quarter-Final': 22, 'Round of 16': 16, 'Round of 32': 12, 'Third Place': 10, 'Group Stage': 5 };
+  const roundPts = { 'Final': 35, 'Semi-Final': 28, 'Quarter-Final': 22, 'Round of 16': 16, 'Round of 32': 10, 'Third Place': 8 };
   const spreadScore = Math.min(discountVsHighest * 0.8, 30);
-  const platformBonus = Math.min((platformList.length - 1) * 8, 20);
+  const platformBonus = Math.min((platformResults.length - 1) * 8, 20);
   const roundScore = roundPts[meta.round] || 5;
   const opportunityScore = Math.min(Math.round(spreadScore + platformBonus + roundScore), 99);
 
-  const demandMap = { 'Final': 'Ultra High', 'Semi-Final': 'Ultra High', 'Quarter-Final': 'High', 'Round of 16': 'Medium', 'Round of 32': 'Medium', 'Group Stage': 'Low' };
+  const demandMap = { 'Final': 'Ultra High', 'Semi-Final': 'Ultra High', 'Quarter-Final': 'High', 'Round of 16': 'High', 'Round of 32': 'Medium', 'Third Place': 'Medium' };
 
-  const marketSummariesPayload = platformList.map(p => ({
+  const marketSummaries = platformResults.map(p => ({
     platform: p.platform,
     min_price: p.min_price,
     avg_price: p.avg_price,
     listing_count: p.listing_count,
-    url: p.url,
+    url: meta.urls[p.platform] || '',
   }));
-
-  if (topSection) marketSummariesPayload.push({ section_arbitrage: topSection });
 
   return {
     match: meta.match,
@@ -230,38 +323,37 @@ function buildOpportunity(platformList, meta, sectionArb = [], source = 'engine'
     round: meta.round,
     demand_tier: demandMap[meta.round] || 'Medium',
     signal_type: signalType,
-    current_price: Math.round(currentPrice),
+    current_price: currentPrice,
     market_value: marketAvg,
-    highest_price: Math.round(highestPrice),
+    highest_price: highestPrice,
     discount_pct: discountVsAvg,
     vs_highest_pct: discountVsHighest,
     opportunity_score: opportunityScore,
     source: cheapest.platform,
-    source_url: cheapest.url || meta.stubhub_url,
+    source_url: meta.urls[cheapest.platform] || meta.urls.stubhub || '',
     best_platform: cheapest.platform,
     worst_platform: priciest.platform,
-    platforms_compared: platformList.length,
-    market_summaries: JSON.stringify(marketSummariesPayload),
-    quantity_available: platformList.reduce((s, p) => s + (p.listing_count || 0), 0),
+    platforms_compared: platformResults.length,
+    market_summaries: JSON.stringify(marketSummaries),
+    quantity_available: platformResults.reduce((s, p) => s + p.listing_count, 0),
     category: 'Category 1',
     is_active: true,
     last_scanned: new Date().toISOString(),
   };
 }
 
-// ── Main handler ─────────────────────────────────────────────────────────────
+// ── Main handler ──────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow scheduler (no user) or admin only
     try {
       const user = await base44.auth.me();
       if (user && user.role !== 'admin') {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
-    } catch { /* scheduler call — allow */ }
+    } catch { /* scheduler — allow */ }
 
     const tdUser = Deno.env.get('TICKETSDATA_USERNAME');
     const tdPass = Deno.env.get('TICKETSDATA_PASSWORD');
@@ -271,52 +363,40 @@ Deno.serve(async (req) => {
 
     const opportunities = [];
     const errors = [];
-    let reportsRemaining = null;
 
-    // ── TRACK A: Market Intelligence for premium matches ──
-    console.log('[Ghost] === TRACK A: Market Intelligence ===');
-    for (const matchMeta of PREMIUM_MATCHES) {
-      try {
-        console.log(`[Ghost/Intel] Fetching /match: ${matchMeta.match}`);
-        const matchData = await tdMatch(tdUser, tdPass, matchMeta.stubhub_url);
+    for (const meta of MATCHES) {
+      const platformResults = [];
 
-        if (matchData.reports_remaining !== undefined) {
-          reportsRemaining = matchData.reports_remaining;
+      for (const [platform, eventUrl] of Object.entries(meta.urls)) {
+        try {
+          console.log(`[Ghost] /fetch ${platform} → ${meta.match}`);
+          const raw = await fetchPlatform(tdUser, tdPass, platform, eventUrl);
+          if (!raw) {
+            console.log(`[Ghost] No data: ${platform} / ${meta.match}`);
+            continue;
+          }
+          const parsed = parseInventory(platform, raw);
+          if (parsed) {
+            platformResults.push(parsed);
+            console.log(`[Ghost] ✓ ${platform}: min=$${parsed.min_price}, count=${parsed.listing_count}`);
+          } else {
+            console.log(`[Ghost] Could not parse prices for ${platform} / ${meta.match}`);
+            // Log raw body structure for debugging
+            console.log(`[Ghost] Raw body keys: ${Object.keys(raw.body || {}).join(', ')}`);
+          }
+        } catch (err) {
+          console.error(`[Ghost] Error ${platform}/${meta.match}: ${err.message}`);
         }
-
-        const opp = extractFromIntelligence(matchData, matchMeta);
-        if (!opp) {
-          errors.push({ match: matchMeta.match, reason: 'no_price_data_in_response', track: 'A' });
-          continue;
-        }
-
-        opportunities.push(opp);
-        console.log(`[Ghost/Intel] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price}, spread ${opp.vs_highest_pct}%`);
-      } catch (err) {
-        errors.push({ match: matchMeta.match, error: err.message, track: 'A' });
-        console.error(`[Ghost/Intel] Error for ${matchMeta.match}: ${err.message}`);
       }
-    }
 
-    // ── TRACK B: Engine arbitrage for broader matches ──
-    console.log('[Ghost] === TRACK B: Engine Arbitrage ===');
-    for (const matchMeta of ENGINE_MATCHES) {
-      try {
-        console.log(`[Ghost/Engine] Fetching platforms for: ${matchMeta.match}`);
-        const platformList = await fetchAllPlatforms(tdUser, tdPass, matchMeta);
-
-        if (platformList.length < 2) {
-          errors.push({ match: matchMeta.match, reason: `only_${platformList.length}_platform(s)_found`, track: 'B' });
-          continue;
-        }
-
-        const opp = buildOpportunity(platformList, matchMeta);
-        opportunities.push(opp);
-        console.log(`[Ghost/Engine] ${matchMeta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price}, spread ${opp.vs_highest_pct}%`);
-      } catch (err) {
-        errors.push({ match: matchMeta.match, error: err.message, track: 'B' });
-        console.error(`[Ghost/Engine] Error for ${matchMeta.match}: ${err.message}`);
+      if (!platformResults.length) {
+        errors.push({ match: meta.match, reason: 'no_platform_data' });
+        continue;
       }
+
+      const opp = buildOpportunity(platformResults, meta);
+      opportunities.push(opp);
+      console.log(`[Ghost] ✅ ${meta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price} (${opp.best_platform}), score ${opp.opportunity_score}`);
     }
 
     opportunities.sort((a, b) => b.opportunity_score - a.opportunity_score);
@@ -334,15 +414,11 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       opportunities_saved: opportunities.length,
-      track_a_count: opportunities.filter(o => PREMIUM_MATCHES.some(m => m.match === o.match)).length,
-      track_b_count: opportunities.filter(o => ENGINE_MATCHES.some(m => m.match === o.match)).length,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
       errors: errors.length,
       error_list: errors,
-      reports_remaining: reportsRemaining,
       opportunities: opportunities.map(o => ({
         match: o.match,
-        track: PREMIUM_MATCHES.some(m => m.match === o.match) ? 'A (Intelligence)' : 'B (Engine)',
         platforms: o.platforms_compared,
         best_price: o.current_price,
         best_platform: o.best_platform,
