@@ -47,8 +47,8 @@ const ROADMAP = [
   },
   {
     phase: "Phase 4", status: "future", label: "Open Source Release", tag: "Future",
-    title: "Open-source when ready.",
-    desc: "Once Ghost is stable, audited, and safe to share publicly, the core project will be opened for community review and contributions.",
+    title: "Enterprise-level technology, open-source when ready.",
+    desc: "Institutional-grade forecasting, automated triggers, and portfolio tooling come first — then, once Ghost is stable and audited, the core project will open for community review and contributions.",
   },
 ];
 
