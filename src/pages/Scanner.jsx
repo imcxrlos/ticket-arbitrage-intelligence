@@ -8,7 +8,7 @@ import OpportunityCard from "@/components/OpportunityCard";
 import OpportunityDetailModal from "@/components/OpportunityDetailModal";
 import { useNavigate } from "react-router-dom";
 
-const OPP_CACHE_KEY = "ghost_opportunities_priority_v2";
+const OPP_CACHE_KEY = "ghost_opportunities_priority_v3";
 const OPP_CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 const TRACKED_MATCHES = new Set([

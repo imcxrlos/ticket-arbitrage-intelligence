@@ -54,15 +54,11 @@ export default function OpportunityCard({ opportunity, index = 0, onSave, isSave
           <span className="text-[9px] font-mono text-white/25 uppercase tracking-widest">{round || "Match"}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={`text-[8px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded ${
-            isArbitrage
-              ? "text-ghost-green bg-ghost-green/10 border border-ghost-green/20"
-              : "text-white/20 bg-white/4 border border-white/8"
-          }`}>
-            {isArbitrage
-              ? <span className="flex items-center gap-0.5"><GitCompareArrows className="w-2 h-2 inline" /> Arb</span>
-              : "Analysis"}
-          </span>
+          {isArbitrage && (
+            <span className="text-[8px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded text-ghost-green bg-ghost-green/10 border border-ghost-green/20">
+              <span className="flex items-center gap-0.5"><GitCompareArrows className="w-2 h-2 inline" /> Arb</span>
+            </span>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onSave?.(opportunity); }}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/5 transition-colors"
