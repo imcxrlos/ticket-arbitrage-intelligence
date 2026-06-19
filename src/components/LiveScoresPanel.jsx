@@ -20,13 +20,19 @@ function MatchCard({ game }) {
     : game.local_date?.split(" ")[1] || "";
 
   return (
-    <div className={`relative rounded-xl overflow-hidden transition-all ${
-      isActive
-        ? "bg-gradient-to-br from-[#0f1f0f] to-[#0a0a0a] border border-[hsl(var(--ghost-green))/20]"
-        : "bg-[#0f0f0f] border border-white/[0.04]"
-    }`}>
+    <div
+      className="relative rounded-xl overflow-hidden transition-all"
+      style={isActive ? {
+        background: "linear-gradient(135deg, #0f1f0f, #0a0a0a)",
+        border: "1px solid rgba(34,197,94,0.2)"
+      } : {
+        background: "#0f0f0f",
+        border: "1px solid rgba(255,255,255,0.04)"
+      }}
+    >
       {isActive && (
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--ghost-green))/40] to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: "linear-gradient(90deg, transparent 0%, rgba(34,197,94,0.4) 50%, transparent 100%)" }} />
       )}
 
       <div className="p-3.5">
@@ -35,13 +41,13 @@ function MatchCard({ game }) {
           <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest">{roundLabel}</span>
           {isLive ? (
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-green))] pulse-dot" />
-              <span className="text-[10px] font-mono text-[hsl(var(--ghost-green))] font-medium">{timeDisplay}</span>
+              <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#22c55e" }} />
+              <span className="text-[10px] font-mono font-medium" style={{ color: "#22c55e" }}>{timeDisplay}</span>
             </div>
           ) : isHalfTime ? (
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--ghost-amber))] pulse-dot" />
-              <span className="text-[10px] font-mono text-[hsl(var(--ghost-amber))] font-medium">HT</span>
+              <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#f59e0b" }} />
+              <span className="text-[10px] font-mono font-medium" style={{ color: "#f59e0b" }}>HT</span>
             </div>
           ) : (
             <span className="text-[9px] font-mono text-white/25">{timeDisplay}</span>
@@ -52,7 +58,7 @@ function MatchCard({ game }) {
         <div className="flex items-center gap-2">
           {/* Home */}
           <div className="flex-1 min-w-0">
-            <div className={`text-sm font-display font-semibold truncate ${isActive ? "text-white" : "text-white/70"}`}>
+            <div className="text-sm font-display font-semibold truncate" style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.7)" }}>
               {game.home}
             </div>
             {game.home_scorers?.length > 0 && (
@@ -66,13 +72,11 @@ function MatchCard({ game }) {
           <div className="shrink-0 flex items-center gap-1.5 px-2">
             {hasScore ? (
               <>
-                <span className={`text-xl font-display font-bold tabular-nums leading-none ${
-                  isLive ? "text-[hsl(var(--ghost-green))]" : isHalfTime ? "text-[hsl(var(--ghost-amber))]" : "text-white"
-                }`}>{game.home_score}</span>
+                <span className="text-xl font-display font-bold tabular-nums leading-none"
+                  style={{ color: isLive ? "#22c55e" : isHalfTime ? "#f59e0b" : "#fff" }}>{game.home_score}</span>
                 <span className="text-white/15 text-base">–</span>
-                <span className={`text-xl font-display font-bold tabular-nums leading-none ${
-                  isLive ? "text-[hsl(var(--ghost-green))]" : isHalfTime ? "text-[hsl(var(--ghost-amber))]" : "text-white"
-                }`}>{game.away_score}</span>
+                <span className="text-xl font-display font-bold tabular-nums leading-none"
+                  style={{ color: isLive ? "#22c55e" : isHalfTime ? "#f59e0b" : "#fff" }}>{game.away_score}</span>
               </>
             ) : (
               <span className="text-white/15 text-sm font-mono">vs</span>
@@ -81,7 +85,7 @@ function MatchCard({ game }) {
 
           {/* Away */}
           <div className="flex-1 min-w-0 text-right">
-            <div className={`text-sm font-display font-semibold truncate ${isActive ? "text-white" : "text-white/70"}`}>
+            <div className="text-sm font-display font-semibold truncate" style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.7)" }}>
               {game.away}
             </div>
             {game.away_scorers?.length > 0 && (

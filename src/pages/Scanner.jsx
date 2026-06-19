@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Scanner() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState(new Set());
@@ -20,7 +21,7 @@ export default function Scanner() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => { setUser(u); setAuthLoading(false); }).catch(() => setAuthLoading(false));
     loadOpportunities();
   }, []);
 
@@ -76,7 +77,7 @@ export default function Scanner() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <GhostNav user={user} />
+      <GhostNav user={user} authLoading={authLoading} />
 
       <div className="pt-16 pb-4 flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden">
 
