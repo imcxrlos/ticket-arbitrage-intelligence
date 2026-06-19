@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import GhostNav from "@/components/GhostNav";
-import { Bookmark, Trash2, ArrowRight, Lock } from "lucide-react";
+import OpportunityCard from "@/components/OpportunityCard";
+import OpportunityDetailModal from "@/components/OpportunityDetailModal";
+import { Bookmark, ArrowRight, Lock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
+import { AnimatePresence } from "framer-motion";
 
 export default function Watchlist() {
   const [user, setUser] = useState(null);
@@ -12,6 +13,7 @@ export default function Watchlist() {
   const [loading, setLoading] = useState(true);
   const [watchlistItems, setWatchlistItems] = useState([]);
   const [opportunities, setOpportunities] = useState({});
+  const [selectedOpp, setSelectedOpp] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,10 +41,22 @@ export default function Watchlist() {
     }
   };
 
-  const handleRemove = async (item) => {
+  const handleRemove = async (opportunity) => {
+    const item = watchlistItems.find(i => i.opportunity_id === opportunity.id);
+    if (!item) return;
     await base44.entities.WatchlistItem.delete(item.id);
     setWatchlistItems(prev => prev.filter(i => i.id !== item.id));
+    if (selectedOpp?.id === opportunity.id) setSelectedOpp(null);
   };
+
+  const handleSetAlert = () => {
+    navigate("/alerts");
+  };
+
+  const savedOpportunityIds = new Set(watchlistItems.map(i => i.opportunity_id));
+  const savedOpportunities = watchlistItems
+    .map(item => opportunities[item.opportunity_id])
+    .filter(Boolean);
 
   if (!user && !loading) {
     return (
@@ -66,7 +80,7 @@ export default function Watchlist() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <GhostNav user={user} authLoading={authLoading} />
       <div className="pt-20 pb-16 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-8 pt-6">
             <div>
               <h1 className="font-display text-2xl font-bold text-white mb-1">Watchlist</h1>
@@ -80,10 +94,10 @@ export default function Watchlist() {
           </div>
 
           {loading ? (
-            <div className="space-y-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-20 glass-card rounded-lg shimmer" />)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, i) => <div key={i} className="h-44 glass-card rounded-lg shimmer" />)}
             </div>
-          ) : watchlistItems.length === 0 ? (
+          ) : savedOpportunities.length === 0 ? (
             <div className="py-24 text-center">
               <Bookmark className="w-8 h-8 text-white/15 mx-auto mb-4" />
               <p className="text-sm text-white/30 font-mono mb-2">Your watchlist is empty</p>
@@ -94,61 +108,33 @@ export default function Watchlist() {
             </div>
           ) : (
             <AnimatePresence>
-              <div className="space-y-2">
-                {watchlistItems.map((item, i) => {
-                  const opp = opportunities[item.opportunity_id];
-                  const disc = opp ? (opp.discount_pct ?? Math.round((1 - opp.current_price / opp.market_value) * 100)) : null;
-                  return (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="glass-card rounded-lg p-4 flex items-center gap-4 hover:border-white/10 transition-all"
-                    >
-                      {opp && (
-                        <div className={`w-1 h-10 rounded-full shrink-0 ${disc >= 30 ? "bg-ghost-green" : disc >= 15 ? "bg-ghost-amber" : "bg-white/20"}`} />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-display text-sm font-semibold text-white truncate">{item.match}</div>
-                        {opp ? (
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-white/35 font-mono">${opp.current_price?.toLocaleString()}</span>
-                            <span className="text-xs text-white/20 font-mono">vs</span>
-                            <span className="text-xs text-white/20 font-mono line-through">${opp.market_value?.toLocaleString()}</span>
-                            {disc !== null && (
-                              <span className={`text-xs font-mono font-semibold ${disc >= 30 ? "text-ghost-green" : disc >= 15 ? "text-ghost-amber" : "text-white/40"}`}>
-                                −{disc}%
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-white/20 font-mono mt-1">Opportunity data unavailable</div>
-                        )}
-                      </div>
-                      <div className="text-right shrink-0">
-                        {opp && (
-                          <div className="text-sm font-mono font-bold text-white mb-0.5">{opp.opportunity_score}/100</div>
-                        )}
-                        <div className="text-[10px] text-white/20 font-mono">
-                          {formatDistanceToNow(new Date(item.created_date), { addSuffix: true })}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleRemove(item)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/5 transition-colors shrink-0"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-white/20 hover:text-white/50 transition-colors" />
-                      </button>
-                    </motion.div>
-                  );
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {savedOpportunities.map((opp, i) => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opportunity={opp}
+                    index={i}
+                    onSave={handleRemove}
+                    isSaved={savedOpportunityIds.has(opp.id)}
+                    onViewDetail={setSelectedOpp}
+                  />
+                ))}
               </div>
             </AnimatePresence>
           )}
         </div>
       </div>
+
+      {selectedOpp && (
+        <OpportunityDetailModal
+          opportunity={selectedOpp}
+          isSaved={savedOpportunityIds.has(selectedOpp.id)}
+          onSave={handleRemove}
+          onSetAlert={handleSetAlert}
+          onClose={() => setSelectedOpp(null)}
+          user={user}
+        />
+      )}
     </div>
   );
 }
