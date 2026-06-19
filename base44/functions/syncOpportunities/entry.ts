@@ -26,6 +26,8 @@ const MATCHES = [
     match_date: '2026-06-28T12:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-inglewood-tickets-6-28-2026/event/153020724/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-06-28-12-pm/17176208',
+      vividseats: 'https://www.vividseats.com/world-cup-soccer-tickets-sofi-stadium-6-28-2026--sports-soccer/production/5080724',
     },
   },
   {
@@ -36,6 +38,8 @@ const MATCHES = [
     match_date: '2026-06-29T12:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-houston-tickets-6-29-2026/event/153021172/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-06-29-12-pm/17307564',
+      vividseats: 'https://www.vividseats.com/world-cup-soccer-tickets-nrg-stadium-6-29-2026--sports-soccer/production/5080729',
     },
   },
   {
@@ -46,6 +50,7 @@ const MATCHES = [
     match_date: '2026-06-29T16:30:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-foxborough-tickets-6-29-2026/event/153023830/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-06-29-4-30-pm/17307562',
     },
   },
   {
@@ -56,6 +61,7 @@ const MATCHES = [
     match_date: '2026-06-30T12:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-6-30-2026/event/153021470/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-06-30-12-pm/17385147',
     },
   },
   {
@@ -66,6 +72,7 @@ const MATCHES = [
     match_date: '2026-06-30T17:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-6-30-2026/event/153023840/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-06-30-5-pm/17269676',
     },
   },
   // Premium long-range liquidity anchors.
@@ -298,7 +305,7 @@ Deno.serve(async (req) => {
 
     const dryRun = payload.dryRun !== false;
     const confirmPaidFetch = payload.confirmPaidFetch === 'RUN_PAID_FETCH';
-    const maxCalls = Math.max(1, Math.min(Number(payload.maxCalls || 1), 3));
+    const maxCalls = Math.max(1, Math.min(Number(payload.maxCalls || 17), 17));
 
     const plannedCalls = MATCHES.flatMap(meta =>
       Object.entries(meta.urls).map(([platform, eventUrl]) => ({ match: meta.match, platform, eventUrl }))
