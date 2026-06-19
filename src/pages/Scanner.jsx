@@ -1,18 +1,38 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import GhostNav from "@/components/GhostNav";
 import LiveScoresPanel from "@/components/LiveScoresPanel";
 import OpportunityCard from "@/components/OpportunityCard";
 import OpportunityDetailModal from "@/components/OpportunityDetailModal";
 import { useNavigate } from "react-router-dom";
 
+const OPP_CACHE_KEY = "ghost_opportunities";
+const OPP_CACHE_TTL = 60 * 60 * 1000; // 1 hour — matches daily sync cadence
+
+function loadOppCache() {
+  try {
+    const raw = localStorage.getItem(OPP_CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts < OPP_CACHE_TTL) return data;
+  } catch {}
+  return null;
+}
+
+function saveOppCache(data) {
+  try {
+    localStorage.setItem(OPP_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch {}
+}
+
 export default function Scanner() {
+  const cached = loadOppCache();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [opportunities, setOpportunities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [opportunities, setOpportunities] = useState(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [savedIds, setSavedIds] = useState(new Set());
   const [selectedOpp, setSelectedOpp] = useState(null);
   const [search, setSearch] = useState("");
@@ -22,7 +42,8 @@ export default function Scanner() {
 
   useEffect(() => {
     base44.auth.me().then(u => { setUser(u); setAuthLoading(false); }).catch(() => setAuthLoading(false));
-    loadOpportunities();
+    // Only fetch from DB if cache is stale/empty
+    if (!cached) loadOpportunities();
   }, []);
 
   useEffect(() => {
@@ -32,11 +53,13 @@ export default function Scanner() {
       .catch(() => {});
   }, [user]);
 
-  const loadOpportunities = async () => {
+  const loadOpportunities = async (force = false) => {
+    if (force) localStorage.removeItem(OPP_CACHE_KEY);
     setLoading(true);
     try {
       const data = await base44.entities.TicketOpportunity.filter({ is_active: true }, "-opportunity_score", 100);
       setOpportunities(data);
+      saveOppCache(data);
     } finally {
       setLoading(false);
     }
@@ -86,7 +109,14 @@ export default function Scanner() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-display text-sm font-semibold text-white tracking-wide">Market Scanner</h1>
-              <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
+              <button
+                onClick={() => loadOpportunities(true)}
+                disabled={loading}
+                title="Refresh data"
+                className="text-white/20 hover:text-white/60 transition-colors disabled:opacity-30"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+              </button>
             </div>
             <p className="text-[10px] text-white/25 font-mono">
               {loading ? "Loading..." : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
