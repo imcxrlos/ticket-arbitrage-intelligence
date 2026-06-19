@@ -466,11 +466,14 @@ Deno.serve(async (req) => {
     if (writeToDb && opportunities.length > 0) {
       const svc = base44.asServiceRole;
       const existing = await svc.entities.TicketOpportunity.list();
-      for (const e of existing) {
-        await svc.entities.TicketOpportunity.delete(e.id);
-      }
+
       for (const opp of opportunities) {
-        await svc.entities.TicketOpportunity.create(opp);
+        const match = existing.find(e => e.match === opp.match);
+        if (match) {
+          await svc.entities.TicketOpportunity.update(match.id, opp);
+        } else {
+          await svc.entities.TicketOpportunity.create(opp);
+        }
         opportunitiesSaved += 1;
       }
     }
@@ -478,6 +481,7 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       write_to_db: writeToDb,
+      write_mode: 'merge_update_existing_matches',
       opportunities_found: opportunities.length,
       opportunities_saved: opportunitiesSaved,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
