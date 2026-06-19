@@ -117,7 +117,7 @@ export default function Scanner() {
       <div className="pt-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-center">
           <span className="font-display text-sm font-semibold text-white">Ghost is free ⚡</span>
-          <span className="ml-2 text-xs text-white/45 font-mono">See live ticket arbitrage opportunities.</span>
+          <span className="ml-2 text-xs text-white/45 font-mono">See live ticket arbitrage opportunities — updated automatically.</span>
         </div>
       </div>
 
