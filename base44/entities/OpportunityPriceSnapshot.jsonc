@@ -1,0 +1,67 @@
+{
+  "name": "OpportunityPriceSnapshot",
+  "type": "object",
+  "properties": {
+    "opportunity_id": {
+      "type": "string",
+      "description": "Linked TicketOpportunity record ID"
+    },
+    "match": {
+      "type": "string"
+    },
+    "scan_id": {
+      "type": "string",
+      "description": "Unique scan execution ID"
+    },
+    "scan_source": {
+      "type": "string",
+      "default": "syncOpportunities"
+    },
+    "current_price": {
+      "type": "number"
+    },
+    "market_value": {
+      "type": "number"
+    },
+    "highest_price": {
+      "type": "number"
+    },
+    "discount_pct": {
+      "type": "number"
+    },
+    "vs_highest_pct": {
+      "type": "number"
+    },
+    "opportunity_score": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string"
+    },
+    "best_platform": {
+      "type": "string"
+    },
+    "worst_platform": {
+      "type": "string"
+    },
+    "platforms_compared": {
+      "type": "number"
+    },
+    "quantity_available": {
+      "type": "number"
+    },
+    "market_summaries": {
+      "type": "string"
+    },
+    "scanned_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "match",
+    "scan_id",
+    "current_price",
+    "scanned_at"
+  ]
+}

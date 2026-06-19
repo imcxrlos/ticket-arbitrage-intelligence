@@ -466,14 +466,39 @@ Deno.serve(async (req) => {
     if (writeToDb && opportunities.length > 0) {
       const svc = base44.asServiceRole;
       const existing = await svc.entities.TicketOpportunity.list();
+      const scanId = `sync_${Date.now()}`;
 
       for (const opp of opportunities) {
         const match = existing.find(e => e.match === opp.match);
+        let opportunityId = match?.id;
+
         if (match) {
           await svc.entities.TicketOpportunity.update(match.id, opp);
         } else {
-          await svc.entities.TicketOpportunity.create(opp);
+          const created = await svc.entities.TicketOpportunity.create(opp);
+          opportunityId = created.id;
         }
+
+        await svc.entities.OpportunityPriceSnapshot.create({
+          opportunity_id: opportunityId,
+          match: opp.match,
+          scan_id: scanId,
+          scan_source: 'syncOpportunities',
+          current_price: opp.current_price,
+          market_value: opp.market_value,
+          highest_price: opp.highest_price,
+          discount_pct: opp.discount_pct,
+          vs_highest_pct: opp.vs_highest_pct,
+          opportunity_score: opp.opportunity_score,
+          source: opp.source,
+          best_platform: opp.best_platform,
+          worst_platform: opp.worst_platform,
+          platforms_compared: opp.platforms_compared,
+          quantity_available: opp.quantity_available,
+          market_summaries: opp.market_summaries,
+          scanned_at: opp.last_scanned,
+        });
+
         opportunitiesSaved += 1;
       }
     }
