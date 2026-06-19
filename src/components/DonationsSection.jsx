@@ -112,7 +112,7 @@ export default function DonationsSection() {
           <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <Heart className="w-3 h-3 text-white/30" />
-            <span className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Open Source · Free Forever</span>
+            <span className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Community Supported · Free Forever</span>
           </div>
           <h2 className="font-display text-[clamp(1.8rem,4vw,3rem)] font-bold text-white leading-tight tracking-tight mb-4">
             Help keep Ghost running.

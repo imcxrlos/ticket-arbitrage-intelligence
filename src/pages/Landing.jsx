@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight, ExternalLink } from "lucide-react";
+import DonationsSection from "@/components/DonationsSection";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
@@ -485,6 +486,9 @@ export default function Landing() {
           </motion.p>
         </div>
       </section>
+
+      {/* ── Donations ── */}
+      <DonationsSection />
 
       {/* ── CTA ── */}
       <section className="py-40 px-6 relative overflow-hidden" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
