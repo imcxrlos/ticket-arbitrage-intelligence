@@ -460,19 +460,26 @@ Deno.serve(async (req) => {
       if (callsMade >= maxCalls) break;
     }
 
-    // Replace all existing records
-    const svc = base44.asServiceRole;
-    const existing = await svc.entities.TicketOpportunity.list();
-    for (const e of existing) {
-      await svc.entities.TicketOpportunity.delete(e.id);
-    }
-    for (const opp of opportunities) {
-      await svc.entities.TicketOpportunity.create(opp);
+    const writeToDb = payload.writeToDb === true;
+    let opportunitiesSaved = 0;
+
+    if (writeToDb && opportunities.length > 0) {
+      const svc = base44.asServiceRole;
+      const existing = await svc.entities.TicketOpportunity.list();
+      for (const e of existing) {
+        await svc.entities.TicketOpportunity.delete(e.id);
+      }
+      for (const opp of opportunities) {
+        await svc.entities.TicketOpportunity.create(opp);
+        opportunitiesSaved += 1;
+      }
     }
 
     return Response.json({
       success: true,
-      opportunities_saved: opportunities.length,
+      write_to_db: writeToDb,
+      opportunities_found: opportunities.length,
+      opportunities_saved: opportunitiesSaved,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
       paid_calls_made: callsMade,
       max_calls_allowed: maxCalls,
