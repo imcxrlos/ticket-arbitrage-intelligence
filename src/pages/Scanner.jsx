@@ -8,8 +8,19 @@ import OpportunityCard from "@/components/OpportunityCard";
 import OpportunityDetailModal from "@/components/OpportunityDetailModal";
 import { useNavigate } from "react-router-dom";
 
-const OPP_CACHE_KEY = "ghost_opportunities";
+const OPP_CACHE_KEY = "ghost_opportunities_priority_v2";
 const OPP_CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+const TRACKED_MATCHES = new Set([
+  "World Cup Round of 32 — SoFi Stadium",
+  "World Cup Round of 32 — Houston",
+  "World Cup Round of 32 — Foxborough",
+  "World Cup Round of 32 — Arlington",
+  "World Cup Round of 32 — East Rutherford",
+  "World Cup Semi-Final 1",
+  "World Cup Semi-Final 2",
+  "World Cup Final",
+]);
 
 function loadOppCache() {
   try {
@@ -58,8 +69,9 @@ export default function Scanner() {
     setLoading(true);
     try {
       const data = await base44.entities.TicketOpportunity.filter({ is_active: true }, "-opportunity_score", 100);
-      setOpportunities(data);
-      saveOppCache(data);
+      const trackedData = data.filter(opp => TRACKED_MATCHES.has(opp.match)).slice(0, 8);
+      setOpportunities(trackedData);
+      saveOppCache(trackedData);
     } finally {
       setLoading(false);
     }

@@ -17,128 +17,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 const TD_BASE = 'https://ticketsdata.com';
 
 const MATCHES = [
-  {
-    match: 'World Cup Final',
-    round: 'Final',
-    stadium: 'MetLife Stadium',
-    city: 'East Rutherford, NJ',
-    match_date: '2026-07-19T15:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
-      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-19-3-pm/17307574',
-    },
-  },
-  {
-    match: 'World Cup Semi-Final 1',
-    round: 'Semi-Final',
-    stadium: 'AT&T Stadium',
-    city: 'Arlington, TX',
-    match_date: '2026-07-14T14:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
-      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-14-2-pm/17385150',
-    },
-  },
-  {
-    match: 'World Cup Semi-Final 2',
-    round: 'Semi-Final',
-    stadium: 'Mercedes-Benz Stadium',
-    city: 'Atlanta, GA',
-    match_date: '2026-07-15T15:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
-    },
-  },
-  {
-    match: 'World Cup Quarter-Final 1',
-    round: 'Quarter-Final',
-    stadium: 'SoFi Stadium',
-    city: 'Inglewood, CA',
-    match_date: '2026-07-09T20:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/',
-    },
-  },
-  {
-    match: 'World Cup Quarter-Final 2',
-    round: 'Quarter-Final',
-    stadium: 'MetLife Stadium',
-    city: 'East Rutherford, NJ',
-    match_date: '2026-07-10T20:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/',
-    },
-  },
-  {
-    match: 'World Cup Quarter-Final 3',
-    round: 'Quarter-Final',
-    stadium: 'AT&T Stadium',
-    city: 'Arlington, TX',
-    match_date: '2026-07-11T20:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/',
-    },
-  },
-  {
-    match: 'World Cup Quarter-Final 4',
-    round: 'Quarter-Final',
-    stadium: 'Mercedes-Benz Stadium',
-    city: 'Atlanta, GA',
-    match_date: '2026-07-12T20:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/',
-    },
-  },
-  {
-    match: 'World Cup Round of 16 — Houston',
-    round: 'Round of 16',
-    stadium: 'NRG Stadium',
-    city: 'Houston, TX',
-    match_date: '2026-07-04T16:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-houston-tickets-7-4-2026/event/153021196/',
-    },
-  },
-  {
-    match: 'World Cup Round of 16 — Philadelphia',
-    round: 'Round of 16',
-    stadium: 'Lincoln Financial Field',
-    city: 'Philadelphia, PA',
-    match_date: '2026-07-04T17:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-philadelphia-tickets-7-4-2026/event/153023863/',
-    },
-  },
-  {
-    match: 'World Cup Round of 16 — East Rutherford',
-    round: 'Round of 16',
-    stadium: 'MetLife Stadium',
-    city: 'East Rutherford, NJ',
-    match_date: '2026-07-05T16:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-5-2026/event/153023886/',
-    },
-  },
-  {
-    match: 'World Cup Round of 16 — Arlington',
-    round: 'Round of 16',
-    stadium: 'AT&T Stadium',
-    city: 'Arlington, TX',
-    match_date: '2026-07-06T14:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-6-2026/event/153021528/',
-    },
-  },
-  {
-    match: 'World Cup Round of 16 — Seattle',
-    round: 'Round of 16',
-    stadium: 'Lumen Field',
-    city: 'Seattle, WA',
-    match_date: '2026-07-06T17:00:00',
-    urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-seattle-tickets-7-6-2026/event/153020574/',
-    },
-  },
+  // Current / near-future matches only: at least 2 days after 2026-06-19.
   {
     match: 'World Cup Round of 32 — SoFi Stadium',
     round: 'Round of 32',
@@ -189,14 +68,37 @@ const MATCHES = [
       stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-6-30-2026/event/153023840/',
     },
   },
+  // Premium long-range liquidity anchors.
   {
-    match: 'World Cup Third Place',
-    round: 'Third Place',
-    stadium: 'Hard Rock Stadium',
-    city: 'Miami, FL',
-    match_date: '2026-07-18T15:00:00',
+    match: 'World Cup Semi-Final 1',
+    round: 'Semi-Final',
+    stadium: 'AT&T Stadium',
+    city: 'Arlington, TX',
+    match_date: '2026-07-14T14:00:00',
     urls: {
-      stubhub: 'https://www.stubhub.com/world-cup-miami-gardens-tickets-7-18-2026/event/153023915/',
+      stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-14-2-pm/17385150',
+    },
+  },
+  {
+    match: 'World Cup Semi-Final 2',
+    round: 'Semi-Final',
+    stadium: 'Mercedes-Benz Stadium',
+    city: 'Atlanta, GA',
+    match_date: '2026-07-15T15:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
+    },
+  },
+  {
+    match: 'World Cup Final',
+    round: 'Final',
+    stadium: 'MetLife Stadium',
+    city: 'East Rutherford, NJ',
+    match_date: '2026-07-19T15:00:00',
+    urls: {
+      stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-19-3-pm/17307574',
     },
   },
 ];
