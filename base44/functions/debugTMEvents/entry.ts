@@ -14,6 +14,17 @@ Deno.serve(async (req) => {
     const tdUser = Deno.env.get('TICKETSDATA_USERNAME');
     const tdPass = Deno.env.get('TICKETSDATA_PASSWORD');
 
+    let payload = {};
+    try { payload = await req.json(); } catch { payload = {}; }
+    if (payload.confirmPaidFetch !== 'RUN_PAID_FETCH') {
+      return Response.json({
+        success: true,
+        mode: 'dry_run',
+        paid_calls_made: 0,
+        message: 'No TicketsData credits used. Pass confirmPaidFetch:"RUN_PAID_FETCH" to inspect one live response.'
+      });
+    }
+
     const targets = [
       { platform: 'stubhub', event_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/' },
       { platform: 'seatgeek', event_url: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-19-3-pm/17307574' },
@@ -21,7 +32,7 @@ Deno.serve(async (req) => {
 
     const results = [];
 
-    for (const t of targets) {
+    for (const t of targets.slice(0, 1)) {
       const url = new URL('https://ticketsdata.com/fetch');
       url.searchParams.set('username', tdUser);
       url.searchParams.set('password', tdPass);
@@ -59,7 +70,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return Response.json({ results });
+    return Response.json({ paid_calls_made: results.length, results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

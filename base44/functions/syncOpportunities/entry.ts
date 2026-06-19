@@ -391,15 +391,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'TICKETSDATA credentials not configured' }, { status: 500 });
     }
 
+    let payload = {};
+    try { payload = await req.json(); } catch { payload = {}; }
+
+    const dryRun = payload.dryRun !== false;
+    const confirmPaidFetch = payload.confirmPaidFetch === 'RUN_PAID_FETCH';
+    const maxCalls = Math.max(1, Math.min(Number(payload.maxCalls || 1), 3));
+
+    const plannedCalls = MATCHES.flatMap(meta =>
+      Object.entries(meta.urls).map(([platform, eventUrl]) => ({ match: meta.match, platform, eventUrl }))
+    );
+
+    if (dryRun || !confirmPaidFetch) {
+      return Response.json({
+        success: true,
+        mode: 'dry_run',
+        paid_calls_made: 0,
+        message: 'No TicketsData credits used. Pass dryRun:false and confirmPaidFetch:"RUN_PAID_FETCH" to run paid fetches.',
+        planned_total_calls: plannedCalls.length,
+        capped_max_calls: maxCalls,
+        first_calls: plannedCalls.slice(0, maxCalls).map(c => ({ match: c.match, platform: c.platform })),
+      });
+    }
+
     const opportunities = [];
     const errors = [];
+    let callsMade = 0;
 
     for (const meta of MATCHES) {
       const platformResults = [];
 
       for (const [platform, eventUrl] of Object.entries(meta.urls)) {
         try {
+          if (callsMade >= maxCalls) {
+            console.log(`[Ghost] Max paid call cap reached: ${maxCalls}`);
+            break;
+          }
+
           console.log(`[Ghost] Fetching ${platform} → ${meta.match}`);
+          callsMade += 1;
           const raw = await fetchPlatform(tdUser, tdPass, platform, eventUrl);
           if (!raw) {
             errors.push({ match: meta.match, platform, reason: 'no_response' });
@@ -420,12 +450,14 @@ Deno.serve(async (req) => {
 
       if (!platformResults.length) {
         console.log(`[Ghost] ⚠ No data for ${meta.match}`);
+        if (callsMade >= maxCalls) break;
         continue;
       }
 
       const opp = buildOpportunity(platformResults, meta);
       opportunities.push(opp);
       console.log(`[Ghost] ✅ ${meta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price} (${opp.best_platform}), score ${opp.opportunity_score}`);
+      if (callsMade >= maxCalls) break;
     }
 
     // Replace all existing records
@@ -442,6 +474,8 @@ Deno.serve(async (req) => {
       success: true,
       opportunities_saved: opportunities.length,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
+      paid_calls_made: callsMade,
+      max_calls_allowed: maxCalls,
       errors_count: errors.length,
       errors,
       opportunities: opportunities.map(o => ({
