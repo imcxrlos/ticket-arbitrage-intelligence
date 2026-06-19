@@ -25,7 +25,7 @@ const MATCHES = [
     match_date: '2026-07-19T15:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
-      ticketmaster: 'https://www.ticketmaster.com/world-cup-final-match-104-east-rutherford-new-jersey-07-19-2026/event/02006239A0E942E6',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-19-3-pm/17307574',
     },
   },
   {
@@ -36,7 +36,7 @@ const MATCHES = [
     match_date: '2026-07-14T14:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-arlington-tickets-7-14-2026/event/153021542/',
-      ticketmaster: 'https://www.ticketmaster.com/world-cup-semi-final-match-102-arlington-texas-07-14-2026/event/0A00623AA83C1B8B',
+      seatgeek: 'https://seatgeek.com/fifa-world-cup-tickets/international-soccer/2026-07-14-2-pm/17385150',
     },
   },
   {
@@ -47,7 +47,6 @@ const MATCHES = [
     match_date: '2026-07-15T15:00:00',
     urls: {
       stubhub: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-15-2026/event/153023901/',
-      ticketmaster: 'https://www.ticketmaster.com/world-cup-semi-final-match-103-atlanta-georgia-07-15-2026/event/1D00623AA83C1B8C',
     },
   },
   {
