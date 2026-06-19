@@ -3,23 +3,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 /**
  * Ghost — syncOpportunities
  *
- * STRATEGY (credit-safe):
+ * Uses /fetch endpoint ONLY (quota_remaining pool — not monthly credits).
+ * NEVER call test_backend_function on this — it burns real API quota.
  *
- * /fetch = uses quota_remaining (huge pool, ~free). Needs a platform-specific event URL.
- * /match = costs 12 credits each. At 25/month cap → max 2 calls/month. Used ONLY on demand, not here.
+ * Verified response schemas per TicketsData docs:
  *
- * This function uses /fetch ONLY:
- * - We have confirmed platform-specific URLs for each match on stubhub + ticketmaster.
- * - We fetch both platforms per match and compute our own arbitrage spread.
- * - Zero /match credits consumed.
- *
- * Event URLs verified from StubHub live listings (June 2026).
+ * Ticketmaster: body._embedded.offer[] → { totalPrice, listPrice, sellableQuantities }
+ * StubHub:      body.items[]           → { rawPrice, price, availableTickets }
+ * SeatGeek:     body.items.offers[]    → { rawPrice, rawPriceWithFees, availableTickets }
+ * VividSeats:   body.items.offers[]    → { rawPrice, rawPriceWithFees, availableTickets }
  */
 
 const TD_BASE = 'https://ticketsdata.com';
 
-// Each match has confirmed URLs for multiple platforms.
-// stubhub + ticketmaster gives us real cross-market spread.
 const MATCHES = [
   {
     match: 'World Cup Final',
@@ -206,7 +202,7 @@ const MATCHES = [
   },
 ];
 
-// ── /fetch helper ─────────────────────────────────────────────────────────────
+// ── /fetch a single platform URL ─────────────────────────────────────────────
 
 async function fetchPlatform(username, password, platform, eventUrl) {
   const url = new URL(`${TD_BASE}/fetch`);
@@ -216,55 +212,85 @@ async function fetchPlatform(username, password, platform, eventUrl) {
   url.searchParams.set('event_url', eventUrl);
 
   const res = await fetch(url.toString());
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.log(`[Ghost] HTTP ${res.status} for ${platform}`);
+    return null;
+  }
 
   const data = await res.json();
-  if (!data || data.status >= 400) return null;
+  // Top-level status can be a number (200) or string
+  const topStatus = data?.status;
+  if (topStatus && topStatus !== 200 && topStatus !== '200' && topStatus !== 'success') {
+    console.log(`[Ghost] API status ${topStatus} for ${platform}: ${JSON.stringify(data).slice(0, 200)}`);
+    return null;
+  }
 
   return data;
 }
 
-// ── Parse raw /fetch response into { min_price, avg_price, listing_count } ───
+// ── Parse each platform's body into { platform, min_price, avg_price, listing_count } ──
+// Schemas verified from TicketsData docs:
+//
+// ticketmaster: body._embedded.offer[] → totalPrice (number), listPrice (string)
+// stubhub:      body.items[]           → rawPrice (number), price (string "$107")
+// seatgeek:     body.items.offers[]    → rawPrice (number), rawPriceWithFees (number)
+// vividseats:   body.items.offers[]    → rawPrice (number), rawPriceWithFees (number)
 
 function parseInventory(platform, data) {
   const body = data?.body;
-  if (!body) return null;
+  if (!body) {
+    console.log(`[Ghost] No body for ${platform}`);
+    return null;
+  }
 
   let prices = [];
 
-  // StubHub
-  if (platform === 'stubhub') {
-    const listings = body?.listings || body?.data?.listings || [];
-    prices = listings
-      .map(l => l.seatPrice?.totalPrice ?? l.pricePerTicket?.amount ?? l.totalPrice ?? 0)
-      .filter(p => p > 0);
-  }
-
-  // Ticketmaster
   if (platform === 'ticketmaster') {
+    // body._embedded.offer[].totalPrice (number) or listPrice (string)
     const offers = body?._embedded?.offer || [];
     prices = offers
-      .map(o => parseFloat(o.totalPrice ?? o.listPrice ?? 0))
+      .map(o => {
+        const p = o.totalPrice ?? parseFloat(o.listPrice ?? '0');
+        return typeof p === 'string' ? parseFloat(p) : p;
+      })
       .filter(p => p > 0);
+    console.log(`[Ghost] TM offers: ${offers.length}, prices parsed: ${prices.length}`);
   }
 
-  // SeatGeek
-  if (platform === 'seatgeek') {
-    const listings = body?.listings || [];
-    prices = listings
-      .map(l => l.price ?? 0)
+  else if (platform === 'stubhub') {
+    // body.items[] → rawPrice (number) is the cleanest field
+    const items = Array.isArray(body?.items) ? body.items : [];
+    prices = items
+      .map(i => i.rawPrice ?? parseFloat((i.price ?? '0').replace(/[^0-9.]/g, '')))
       .filter(p => p > 0);
+    console.log(`[Ghost] SH items: ${items.length}, prices parsed: ${prices.length}`);
   }
 
-  // VividSeats
-  if (platform === 'vividseats') {
-    const rows = body?.rows || body?.listings || [];
-    prices = rows
-      .map(r => r.price ?? r.ticketPrice ?? 0)
+  else if (platform === 'seatgeek') {
+    // body.items.offers[] → rawPrice (pre-fee) or rawPriceWithFees
+    const offers = body?.items?.offers || [];
+    prices = offers
+      .map(o => o.rawPrice ?? o.rawPriceWithFees ?? 0)
       .filter(p => p > 0);
+    console.log(`[Ghost] SG offers: ${offers.length}, prices parsed: ${prices.length}`);
   }
 
-  if (!prices.length) return null;
+  else if (platform === 'vividseats') {
+    // body.items.offers[] → rawPrice (pre-fee) or rawPriceWithFees
+    const offers = body?.items?.offers || [];
+    prices = offers
+      .map(o => o.rawPrice ?? o.rawPriceWithFees ?? 0)
+      .filter(p => p > 0);
+    console.log(`[Ghost] VS offers: ${offers.length}, prices parsed: ${prices.length}`);
+  }
+
+  if (!prices.length) {
+    // Log body shape to help debug without re-burning credits
+    const bodyKeys = Object.keys(body || {});
+    console.log(`[Ghost] Zero prices for ${platform}. Body keys: ${bodyKeys.join(', ')}`);
+    if (body?.items) console.log(`[Ghost] items type: ${Array.isArray(body.items) ? 'array len=' + body.items.length : typeof body.items}`);
+    return null;
+  }
 
   prices.sort((a, b) => a - b);
   return {
@@ -275,7 +301,7 @@ function parseInventory(platform, data) {
   };
 }
 
-// ── Build opportunity record from platform data ───────────────────────────────
+// ── Build opportunity from platform results ───────────────────────────────────
 
 function buildOpportunity(platformResults, meta) {
   platformResults.sort((a, b) => a.min_price - b.min_price);
@@ -348,6 +374,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // Auth check — allow scheduler (no user), block non-admin users
     try {
       const user = await base44.auth.me();
       if (user && user.role !== 'admin') {
@@ -369,28 +396,27 @@ Deno.serve(async (req) => {
 
       for (const [platform, eventUrl] of Object.entries(meta.urls)) {
         try {
-          console.log(`[Ghost] /fetch ${platform} → ${meta.match}`);
+          console.log(`[Ghost] Fetching ${platform} → ${meta.match}`);
           const raw = await fetchPlatform(tdUser, tdPass, platform, eventUrl);
           if (!raw) {
-            console.log(`[Ghost] No data: ${platform} / ${meta.match}`);
+            errors.push({ match: meta.match, platform, reason: 'no_response' });
             continue;
           }
           const parsed = parseInventory(platform, raw);
           if (parsed) {
             platformResults.push(parsed);
-            console.log(`[Ghost] ✓ ${platform}: min=$${parsed.min_price}, count=${parsed.listing_count}`);
+            console.log(`[Ghost] ✓ ${platform}: min=$${parsed.min_price}, avg=$${parsed.avg_price}, count=${parsed.listing_count}`);
           } else {
-            console.log(`[Ghost] Could not parse prices for ${platform} / ${meta.match}`);
-            // Log raw body structure for debugging
-            console.log(`[Ghost] Raw body keys: ${Object.keys(raw.body || {}).join(', ')}`);
+            errors.push({ match: meta.match, platform, reason: 'parse_failed' });
           }
         } catch (err) {
           console.error(`[Ghost] Error ${platform}/${meta.match}: ${err.message}`);
+          errors.push({ match: meta.match, platform, reason: err.message });
         }
       }
 
       if (!platformResults.length) {
-        errors.push({ match: meta.match, reason: 'no_platform_data' });
+        console.log(`[Ghost] ⚠ No data for ${meta.match}`);
         continue;
       }
 
@@ -398,8 +424,6 @@ Deno.serve(async (req) => {
       opportunities.push(opp);
       console.log(`[Ghost] ✅ ${meta.match}: ${opp.platforms_compared} platforms, best $${opp.current_price} (${opp.best_platform}), score ${opp.opportunity_score}`);
     }
-
-    opportunities.sort((a, b) => b.opportunity_score - a.opportunity_score);
 
     // Replace all existing records
     const svc = base44.asServiceRole;
@@ -415,8 +439,8 @@ Deno.serve(async (req) => {
       success: true,
       opportunities_saved: opportunities.length,
       arbitrage_signals: opportunities.filter(o => o.signal_type === 'Arbitrage').length,
-      errors: errors.length,
-      error_list: errors,
+      errors_count: errors.length,
+      errors,
       opportunities: opportunities.map(o => ({
         match: o.match,
         platforms: o.platforms_compared,
