@@ -121,85 +121,54 @@ export default function Scanner() {
         </div>
       </div>
 
-      <div className="pt-3 pb-4 flex flex-col lg:flex-row lg:h-[calc(100vh-7.5rem)] lg:overflow-hidden">
-
-        {/* ── LEFT SIDEBAR ── */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-white/[0.05] overflow-y-auto px-5 py-6 gap-5 lg:h-full">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h1 className="font-display text-sm font-semibold text-white tracking-wide">Market Scanner</h1>
+      <div className="pt-3 pb-4">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
+                <h1 className="font-display text-base font-bold text-white">Market Scanner</h1>
+                <span className="text-[10px] text-white/25 font-mono">{loading ? "…" : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}</span>
+              </div>
               <button
                 onClick={() => loadOpportunities(true)}
                 disabled={loading}
                 title="Refresh data"
-                className="text-white/20 hover:text-white/60 transition-colors disabled:opacity-30"
+                className="lg:hidden text-white/25 hover:text-white/60 transition-colors disabled:opacity-30"
               >
-                <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               </button>
             </div>
-            <p className="text-[10px] text-white/25 font-mono">
-              {loading ? "Loading..." : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
-            </p>
-          </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search match or city..."
-              className="w-full h-9 pl-9 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-            />
-          </div>
-
-          <div>
-            <label className="text-[9px] font-mono text-white/20 uppercase tracking-widest block mb-2">Sort by</label>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="w-full h-8 px-2 rounded-lg text-xs text-white/60 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              <option value="score">Opportunity Score</option>
-              <option value="discount">Discount %</option>
-              <option value="price_asc">Price: Low → High</option>
-              <option value="price_desc">Price: High → Low</option>
-            </select>
-          </div>
-        </aside>
-
-        {/* ── MAIN CONTENT ── */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-
-          {/* Mobile header + search/sort bar */}
-          <div className="flex lg:hidden flex-col gap-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                <h1 className="font-display text-base font-bold text-white">Market Scanner</h1>
-                <span className="text-[10px] text-white/25 font-mono">{loading ? "…" : `${filtered.length}`}</span>
-              </div>
-            </div>
-            {/* Mobile search + sort inline */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 lg:w-[520px]">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Match or city..."
-                  className="w-full h-8 pl-7 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  placeholder="Search match or city..."
+                  className="w-full h-9 pl-7 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="h-8 px-2 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                className="h-9 px-2 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <option value="score">Score</option>
                 <option value="discount">Discount</option>
                 <option value="price_asc">$ Low</option>
                 <option value="price_desc">$ High</option>
               </select>
+              <button
+                onClick={() => loadOpportunities(true)}
+                disabled={loading}
+                title="Refresh data"
+                className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-white/25 hover:text-white/60 transition-colors disabled:opacity-30"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              </button>
             </div>
           </div>
 
