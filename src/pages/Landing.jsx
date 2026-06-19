@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight, ExternalLink } from "lucide-react";
-import DonationsSection from "@/components/DonationsSection";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
@@ -47,9 +46,9 @@ const ROADMAP = [
     highlight: true,
   },
   {
-    phase: "Phase 4", status: "future", label: "Pro Intelligence Layer", tag: "2027",
-    title: "Institutional-grade tooling. Still free.",
-    desc: "AI-driven opportunity forecasting, automated triggers, portfolio tracking, and multi-event arbitrage routing — all funded by the community.",
+    phase: "Phase 4", status: "future", label: "Open Source Release", tag: "Future",
+    title: "Open-source when ready.",
+    desc: "Once Ghost is stable, audited, and safe to share publicly, the core project will be opened for community review and contributions.",
   },
 ];
 
@@ -470,7 +469,7 @@ export default function Landing() {
           <motion.div {...fadeUpView()} className="mb-20 text-center">
             <p className="text-[11px] text-white/25 font-mono tracking-[0.22em] uppercase mb-4">Roadmap</p>
             <h2 className="font-display text-[clamp(2rem,5vw,3.5rem)] font-bold text-white leading-tight tracking-tight">Where Ghost is going.</h2>
-            <p className="text-[14px] text-white/30 mt-4 max-w-lg mx-auto leading-relaxed">An open, community-funded project. Free at the core — forever.</p>
+            <p className="text-[14px] text-white/30 mt-4 max-w-lg mx-auto leading-relaxed">A community-funded project. Free at the core — forever.</p>
           </motion.div>
 
           {/* Stacked cards */}
@@ -486,9 +485,6 @@ export default function Landing() {
           </motion.p>
         </div>
       </section>
-
-      {/* ── Donations ── */}
-      <DonationsSection />
 
       {/* ── CTA ── */}
       <section className="py-40 px-6 relative overflow-hidden" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
