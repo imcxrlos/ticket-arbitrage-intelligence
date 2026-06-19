@@ -258,10 +258,14 @@ function parseInventory(platform, data) {
   }
 
   else if (platform === 'stubhub') {
-    // body.items[] → rawPrice (number) is the cleanest field
-    const items = Array.isArray(body?.items) ? body.items : [];
+    // body.items[] or body.listings[] → rawPrice (number) is the cleanest field
+    const items = Array.isArray(body?.items) ? body.items
+      : Array.isArray(body?.listings) ? body.listings
+      : Array.isArray(body?.events) ? body.events
+      : [];
+    console.log(`[Ghost] SH raw body keys: ${Object.keys(body || {}).join(', ')}`);
     prices = items
-      .map(i => i.rawPrice ?? parseFloat((i.price ?? '0').replace(/[^0-9.]/g, '')))
+      .map(i => i.rawPrice ?? i.currentPrice ?? i.salePrice ?? parseFloat((i.price ?? '0').replace(/[^0-9.]/g, '')))
       .filter(p => p > 0);
     console.log(`[Ghost] SH items: ${items.length}, prices parsed: ${prices.length}`);
   }
