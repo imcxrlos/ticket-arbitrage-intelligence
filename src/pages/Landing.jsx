@@ -533,14 +533,17 @@ export default function Landing() {
               <span className="text-[10px] font-mono" style={{ color: "rgba(34,197,94,0.6)" }}>99% uptime</span>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4 sm:gap-6">
             <Link to="/terms" className="text-[12px] font-mono transition-colors duration-200" style={{ color: "rgba(255,255,255,0.2)" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}
               onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>Terms</Link>
             <Link to="/privacy" className="text-[12px] font-mono transition-colors duration-200" style={{ color: "rgba(255,255,255,0.2)" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}
               onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>Privacy</Link>
-            <span className="text-[12px] font-mono" style={{ color: "rgba(255,255,255,0.12)" }}>FIFA World Cup 2026 Arbitrage Intelligence</span>
+            <a href="https://x.com/cxrlosbtc" target="_blank" rel="noopener noreferrer" className="text-[12px] font-mono transition-colors duration-200" style={{ color: "rgba(255,255,255,0.2)" }}
+              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>X</a>
+            <span className="text-[12px] font-mono" style={{ color: "rgba(255,255,255,0.12)" }}>Made with love by <a href="https://x.com/cxrlosbtc" target="_blank" rel="noopener noreferrer" className="transition-colors duration-200" style={{ color: "rgba(255,255,255,0.28)" }}>@cxrlosbtc</a></span>
           </div>
         </div>
       </motion.footer>
