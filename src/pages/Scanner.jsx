@@ -12,15 +12,15 @@ const OPP_CACHE_KEY = "ghost_opportunities_priority_v3";
 const OPP_CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 const TRACKED_MATCHES = new Set([
-  "World Cup Round of 32 — SoFi Stadium",
-  "World Cup Round of 32 — Houston",
-  "World Cup Round of 32 — Foxborough",
-  "World Cup Round of 32 — Arlington",
-  "World Cup Round of 32 — East Rutherford",
-  "World Cup Semi-Final 1",
-  "World Cup Semi-Final 2",
-  "World Cup Final",
-]);
+"World Cup Round of 32 — SoFi Stadium",
+"World Cup Round of 32 — Houston",
+"World Cup Round of 32 — Foxborough",
+"World Cup Round of 32 — Arlington",
+"World Cup Round of 32 — East Rutherford",
+"World Cup Semi-Final 1",
+"World Cup Semi-Final 2",
+"World Cup Final"]
+);
 
 function loadOppCache() {
   try {
@@ -52,16 +52,16 @@ export default function Scanner() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(u => { setUser(u); setAuthLoading(false); }).catch(() => setAuthLoading(false));
+    base44.auth.me().then((u) => {setUser(u);setAuthLoading(false);}).catch(() => setAuthLoading(false));
     // Only fetch from DB if cache is stale/empty
     if (!cached) loadOpportunities();
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    base44.entities.WatchlistItem.filter({ user_id: user.id })
-      .then(items => setSavedIds(new Set(items.map(i => i.opportunity_id))))
-      .catch(() => {});
+    base44.entities.WatchlistItem.filter({ user_id: user.id }).
+    then((items) => setSavedIds(new Set(items.map((i) => i.opportunity_id)))).
+    catch(() => {});
   }, [user]);
 
   const loadOpportunities = async (force = false) => {
@@ -69,7 +69,7 @@ export default function Scanner() {
     setLoading(true);
     try {
       const data = await base44.entities.TicketOpportunity.filter({ is_active: true }, "-opportunity_score", 100);
-      const trackedData = data.filter(opp => TRACKED_MATCHES.has(opp.match)).slice(0, 8);
+      const trackedData = data.filter((opp) => TRACKED_MATCHES.has(opp.match)).slice(0, 8);
       setOpportunities(trackedData);
       saveOppCache(trackedData);
     } finally {
@@ -78,35 +78,35 @@ export default function Scanner() {
   };
 
   const handleSave = async (opp) => {
-    if (!user) { navigate("/login"); return; }
+    if (!user) {navigate("/login");return;}
     if (savedIds.has(opp.id)) {
       const items = await base44.entities.WatchlistItem.filter({ user_id: user.id, opportunity_id: opp.id });
       if (items.length) await base44.entities.WatchlistItem.delete(items[0].id);
-      setSavedIds(prev => { const n = new Set(prev); n.delete(opp.id); return n; });
+      setSavedIds((prev) => {const n = new Set(prev);n.delete(opp.id);return n;});
     } else {
       await base44.entities.WatchlistItem.create({ user_id: user.id, opportunity_id: opp.id, match: opp.match });
-      setSavedIds(prev => new Set([...prev, opp.id]));
+      setSavedIds((prev) => new Set([...prev, opp.id]));
     }
   };
 
   const handleSetAlert = () => {
-    if (!user) { navigate("/login"); return; }
+    if (!user) {navigate("/login");return;}
     navigate("/alerts");
   };
 
-  const filtered = opportunities
-    .filter(o => {
-      if (!search) return true;
-      const q = search.toLowerCase();
-      return o.match?.toLowerCase().includes(q) || o.city?.toLowerCase().includes(q);
-    })
-    .sort((a, b) => {
-      if (sortBy === "score") return (b.opportunity_score ?? 0) - (a.opportunity_score ?? 0);
-      if (sortBy === "discount") return (b.discount_pct ?? 0) - (a.discount_pct ?? 0);
-      if (sortBy === "price_asc") return a.current_price - b.current_price;
-      if (sortBy === "price_desc") return b.current_price - a.current_price;
-      return 0;
-    });
+  const filtered = opportunities.
+  filter((o) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return o.match?.toLowerCase().includes(q) || o.city?.toLowerCase().includes(q);
+  }).
+  sort((a, b) => {
+    if (sortBy === "score") return (b.opportunity_score ?? 0) - (a.opportunity_score ?? 0);
+    if (sortBy === "discount") return (b.discount_pct ?? 0) - (a.discount_pct ?? 0);
+    if (sortBy === "price_asc") return a.current_price - b.current_price;
+    if (sortBy === "price_desc") return b.current_price - a.current_price;
+    return 0;
+  });
 
   const topOpp = filtered[0] ?? null;
 
@@ -134,8 +134,8 @@ export default function Scanner() {
                 onClick={() => loadOpportunities(true)}
                 disabled={loading}
                 title="Refresh data"
-                className="lg:hidden text-white/25 hover:text-white/60 transition-colors disabled:opacity-30"
-              >
+                className="lg:hidden text-white/25 hover:text-white/60 transition-colors disabled:opacity-30">
+                
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               </button>
             </div>
@@ -145,30 +145,30 @@ export default function Scanner() {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
                 <input
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search match or city..."
-                  className="w-full h-9 pl-7 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                />
+                  className="w-full h-9 pl-7 pr-3 rounded-lg text-xs text-white placeholder:text-white/20 font-mono outline-none focus:border-white/15 transition-colors" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
+                
               </div>
               <select
                 value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="h-9 px-2 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-              >
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-9 px-2 rounded-lg text-xs text-white/50 font-mono outline-none appearance-none cursor-pointer" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                
                 <option value="score">Score</option>
                 <option value="discount">Discount</option>
                 <option value="price_asc">$ Low</option>
                 <option value="price_desc">$ High</option>
               </select>
-              <button
-                onClick={() => loadOpportunities(true)}
-                disabled={loading}
-                title="Refresh data"
-                className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-white/25 hover:text-white/60 transition-colors disabled:opacity-30"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              </button>
+              
+
+
+
+
+
+
+
+              
             </div>
           </div>
 
@@ -176,14 +176,14 @@ export default function Scanner() {
           <LiveScoresPanel />
 
           {/* Cards */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white/3 rounded-xl h-40 shimmer border border-white/[0.04]" />
-              ))}
-            </div>
-          ) : opportunities.length === 0 ? (
-            <div className="py-32 text-center">
+          {loading ?
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {[...Array(6)].map((_, i) =>
+            <div key={i} className="bg-white/3 rounded-xl h-40 shimmer border border-white/[0.04]" />
+            )}
+            </div> :
+          opportunities.length === 0 ?
+          <div className="py-32 text-center">
               <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center mx-auto mb-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
               </div>
@@ -191,21 +191,21 @@ export default function Scanner() {
               <div className="text-white/20 font-mono text-xs max-w-xs mx-auto leading-relaxed">
                 The hourly market scan is running. Data will appear automatically once live ticket pricing is detected across platforms.
               </div>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-32 text-center">
+            </div> :
+          filtered.length === 0 ?
+          <div className="py-32 text-center">
               <div className="text-white/20 font-mono text-sm mb-3">No matches found for "{search}"</div>
               <button onClick={() => setSearch("")} className="text-xs text-white/30 hover:text-white underline font-mono transition-colors">
                 Clear search
               </button>
-            </div>
-          ) : (
-            <>
-              {topOpp && (
-                <div
-                  className="hidden sm:block bg-white/[0.03] border border-white/8 rounded-xl p-5 mb-5 cursor-pointer hover:border-white/14 transition-all relative overflow-hidden group"
-                  onClick={() => setSelectedOpp(topOpp)}
-                >
+            </div> :
+
+          <>
+              {topOpp &&
+            <div
+              className="hidden sm:block bg-white/[0.03] border border-white/8 rounded-xl p-5 mb-5 cursor-pointer hover:border-white/14 transition-all relative overflow-hidden group"
+              onClick={() => setSelectedOpp(topOpp)}>
+              
                   <div className="absolute top-0 right-0 w-48 h-48 bg-ghost-green/5 rounded-full -translate-y-12 translate-x-12 blur-3xl pointer-events-none" />
                   <div className="flex items-center justify-between gap-6">
                     <div>
@@ -224,35 +224,35 @@ export default function Scanner() {
                     </div>
                   </div>
                 </div>
-              )}
+            }
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {filtered.map((opp, i) => (
-                  <OpportunityCard
-                    key={opp.id}
-                    opportunity={opp}
-                    index={i}
-                    onSave={handleSave}
-                    isSaved={savedIds.has(opp.id)}
-                    onViewDetail={setSelectedOpp}
-                  />
-                ))}
+                {filtered.map((opp, i) =>
+              <OpportunityCard
+                key={opp.id}
+                opportunity={opp}
+                index={i}
+                onSave={handleSave}
+                isSaved={savedIds.has(opp.id)}
+                onViewDetail={setSelectedOpp} />
+
+              )}
               </div>
             </>
-          )}
+          }
         </main>
       </div>
 
-      {selectedOpp && (
-        <OpportunityDetailModal
-          opportunity={selectedOpp}
-          isSaved={savedIds.has(selectedOpp.id)}
-          onSave={handleSave}
-          onSetAlert={handleSetAlert}
-          onClose={() => setSelectedOpp(null)}
-          user={user}
-        />
-      )}
-    </div>
-  );
+      {selectedOpp &&
+      <OpportunityDetailModal
+        opportunity={selectedOpp}
+        isSaved={savedIds.has(selectedOpp.id)}
+        onSave={handleSave}
+        onSetAlert={handleSetAlert}
+        onClose={() => setSelectedOpp(null)}
+        user={user} />
+
+      }
+    </div>);
+
 }
