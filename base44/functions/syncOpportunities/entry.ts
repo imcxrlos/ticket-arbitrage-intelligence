@@ -18,8 +18,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const TD_BASE = 'https://ticketsdata.com';
 
-// TRACK A — Premium matches only (1 credit each via /match)
-const PREMIUM_MATCHES = [
+// TRACK A — 1 credit per day (rotate through premium matches daily)
+// We pick 1 match per day based on day-of-month to spread the 25/month cap evenly.
+const ALL_PREMIUM_MATCHES = [
   {
     stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-19-2026/event/153020449/',
     match: 'World Cup Final',
@@ -45,74 +46,34 @@ const PREMIUM_MATCHES = [
     match_date: '2026-07-15T15:00:00',
   },
 ];
+// Pick exactly 1 premium match today based on day of month (rotates: Final → SF1 → SF2 → Final → ...)
+const todayIdx = new Date().getDate() % ALL_PREMIUM_MATCHES.length;
+const PREMIUM_MATCHES = [ALL_PREMIUM_MATCHES[todayIdx]];
 
-// TRACK B — Broader matches via /fetch (our own arbitrage engine, no credits burned)
-// Platforms we hit independently: stubhub, ticketmaster, seatgeek, vividseats
+// TRACK B — All remaining WC2026 matches via /fetch (free, our own engine)
+// Covers QFs, R16, R32, Group Stage, Third Place — no credits consumed
 const ENGINE_MATCHES = [
-  {
-    match: 'World Cup Quarter-Final 1',
-    round: 'Quarter-Final',
-    stadium: 'SoFi Stadium',
-    city: 'Los Angeles, CA',
-    match_date: '2026-07-09T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/',
-  },
-  {
-    match: 'World Cup Quarter-Final 2',
-    round: 'Quarter-Final',
-    stadium: 'MetLife Stadium',
-    city: 'East Rutherford, NJ',
-    match_date: '2026-07-10T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/',
-  },
-  {
-    match: 'World Cup Quarter-Final 3',
-    round: 'Quarter-Final',
-    stadium: 'AT&T Stadium',
-    city: 'Arlington, TX',
-    match_date: '2026-07-11T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/',
-  },
-  {
-    match: 'World Cup Quarter-Final 4',
-    round: 'Quarter-Final',
-    stadium: 'Mercedes-Benz Stadium',
-    city: 'Atlanta, GA',
-    match_date: '2026-07-12T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/',
-  },
-  {
-    match: 'World Cup Round of 16 — A',
-    round: 'Round of 16',
-    stadium: 'Arrowhead Stadium',
-    city: 'Kansas City, MO',
-    match_date: '2026-07-01T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-kansas-city-tickets-7-1-2026/event/153021550/',
-  },
-  {
-    match: 'World Cup Round of 16 — B',
-    round: 'Round of 16',
-    stadium: 'Levi\'s Stadium',
-    city: 'Santa Clara, CA',
-    match_date: '2026-07-02T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-santa-clara-tickets-7-2-2026/event/153020460/',
-  },
-  {
-    match: 'World Cup Round of 16 — C',
-    round: 'Round of 16',
-    stadium: 'Rose Bowl',
-    city: 'Pasadena, CA',
-    match_date: '2026-07-03T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-pasadena-tickets-7-3-2026/event/153020461/',
-  },
-  {
-    match: 'World Cup Round of 16 — D',
-    round: 'Round of 16',
-    stadium: 'Hard Rock Stadium',
-    city: 'Miami, FL',
-    match_date: '2026-07-04T20:00:00',
-    stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-4-2026/event/153023910/',
-  },
+  // Quarter-Finals
+  { match: 'World Cup Quarter-Final 1', round: 'Quarter-Final', stadium: 'SoFi Stadium', city: 'Los Angeles, CA', match_date: '2026-07-09T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-9-2026/event/153020451/' },
+  { match: 'World Cup Quarter-Final 2', round: 'Quarter-Final', stadium: 'MetLife Stadium', city: 'East Rutherford, NJ', match_date: '2026-07-10T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-east-rutherford-tickets-7-10-2026/event/153020452/' },
+  { match: 'World Cup Quarter-Final 3', round: 'Quarter-Final', stadium: 'AT&T Stadium', city: 'Arlington, TX', match_date: '2026-07-11T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-arlington-tickets-7-11-2026/event/153021544/' },
+  { match: 'World Cup Quarter-Final 4', round: 'Quarter-Final', stadium: 'Mercedes-Benz Stadium', city: 'Atlanta, GA', match_date: '2026-07-12T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-atlanta-tickets-7-12-2026/event/153023902/' },
+  // Round of 16
+  { match: 'World Cup Round of 16 — A', round: 'Round of 16', stadium: 'Arrowhead Stadium', city: 'Kansas City, MO', match_date: '2026-07-01T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-kansas-city-tickets-7-1-2026/event/153021550/' },
+  { match: 'World Cup Round of 16 — B', round: 'Round of 16', stadium: 'Levi\'s Stadium', city: 'Santa Clara, CA', match_date: '2026-07-02T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-santa-clara-tickets-7-2-2026/event/153020460/' },
+  { match: 'World Cup Round of 16 — C', round: 'Round of 16', stadium: 'Rose Bowl', city: 'Pasadena, CA', match_date: '2026-07-03T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-pasadena-tickets-7-3-2026/event/153020461/' },
+  { match: 'World Cup Round of 16 — D', round: 'Round of 16', stadium: 'Hard Rock Stadium', city: 'Miami, FL', match_date: '2026-07-04T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-4-2026/event/153023910/' },
+  { match: 'World Cup Round of 16 — E', round: 'Round of 16', stadium: 'Lincoln Financial Field', city: 'Philadelphia, PA', match_date: '2026-07-01T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-philadelphia-tickets-7-1-2026/event/153023920/' },
+  { match: 'World Cup Round of 16 — F', round: 'Round of 16', stadium: 'Gillette Stadium', city: 'Foxborough, MA', match_date: '2026-07-02T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-foxborough-tickets-7-2-2026/event/153023921/' },
+  { match: 'World Cup Round of 16 — G', round: 'Round of 16', stadium: 'NRG Stadium', city: 'Houston, TX', match_date: '2026-07-03T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-houston-tickets-7-3-2026/event/153021560/' },
+  { match: 'World Cup Round of 16 — H', round: 'Round of 16', stadium: 'SoFi Stadium', city: 'Los Angeles, CA', match_date: '2026-07-04T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-inglewood-tickets-7-4-2026/event/153020462/' },
+  // Round of 32
+  { match: 'World Cup Round of 32 — A', round: 'Round of 32', stadium: 'BC Place', city: 'Vancouver, BC', match_date: '2026-06-28T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-vancouver-tickets-6-28-2026/event/153025010/' },
+  { match: 'World Cup Round of 32 — B', round: 'Round of 32', stadium: 'Estadio Akron', city: 'Guadalajara, MX', match_date: '2026-06-28T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-guadalajara-tickets-6-28-2026/event/153026010/' },
+  { match: 'World Cup Round of 32 — C', round: 'Round of 32', stadium: 'Estadio BBVA', city: 'Monterrey, MX', match_date: '2026-06-29T16:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-monterrey-tickets-6-29-2026/event/153026011/' },
+  { match: 'World Cup Round of 32 — D', round: 'Round of 32', stadium: 'Estadio Azteca', city: 'Mexico City, MX', match_date: '2026-06-29T20:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-mexico-city-tickets-6-29-2026/event/153026012/' },
+  // Third Place
+  { match: 'World Cup Third Place', round: 'Third Place', stadium: 'Hard Rock Stadium', city: 'Miami, FL', match_date: '2026-07-18T15:00:00', stubhub_url: 'https://www.stubhub.com/world-cup-miami-tickets-7-18-2026/event/153023915/' },
 ];
 
 // ── TRACK A: Market Intelligence via /match ──────────────────────────────────
