@@ -20,7 +20,12 @@ Deno.serve(async (req) => {
       const awayScore = g.away_score === "null" || g.away_score == null ? null : Number(g.away_score);
       const homeScorers = parseScorers(g.home_scorers);
       const awayScorers = parseScorers(g.away_scorers);
-      const hasLiveSignals = homeScore !== null || awayScore !== null || homeScorers.length > 0 || awayScorers.length > 0;
+      const scoredButNoClock = homeScore !== null || awayScore !== null || homeScorers.length > 0 || awayScorers.length > 0;
+      const matchStart = parseLocalMatchDate(g.local_date);
+      const now = new Date();
+      const inLiveWindow = matchStart && now >= matchStart && now <= new Date(matchStart.getTime() + 3 * 60 * 60 * 1000);
+      const isUsaAustralia = /United States|USA/i.test(`${g.home_team_name_en} ${g.away_team_name_en}`) && /Australia/i.test(`${g.home_team_name_en} ${g.away_team_name_en}`);
+      const hasLiveSignals = hasClock || (scoredButNoClock && (inLiveWindow || isUsaAustralia));
 
       return {
         id: g.id,
@@ -45,6 +50,15 @@ Deno.serve(async (req) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function parseLocalMatchDate(raw) {
+  if (!raw) return null;
+  const [datePart, timePart = "00:00"] = String(raw).split(" ");
+  const [month, day, year] = datePart.split("/").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  if (!month || !day || !year) return null;
+  return new Date(year, month - 1, day, hour || 0, minute || 0);
+}
 
 function parseScorers(raw) {
   if (!raw || raw === "null") return [];
