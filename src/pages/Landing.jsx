@@ -1,20 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight, ExternalLink } from "lucide-react";
 import DonationsSection from "@/components/DonationsSection";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const TICKER_ITEMS = [
-  { match: "Argentina vs Brazil", score: 94, discount: "41%" },
-  { match: "USA vs Mexico", score: 88, discount: "28%" },
-  { match: "France vs England", score: 91, discount: "35%" },
-  { match: "Spain vs Germany", score: 86, discount: "22%" },
-  { match: "Portugal vs Netherlands", score: 79, discount: "18%" },
-  { match: "Morocco vs Senegal", score: 83, discount: "31%" },
-  { match: "Japan vs South Korea", score: 77, discount: "24%" },
-  { match: "Brazil vs France", score: 96, discount: "44%" },
-];
+const TICKER_ITEMS = [];
 
 const FEATURES = [
   { icon: Zap, title: "Real-time Scanning", desc: "Continuous market surveillance across 12+ ticket platforms, updated every 60 seconds." },
@@ -207,6 +199,7 @@ function RoadmapCard({ item, index }) {
 
 export default function Landing() {
   const [liveCount, setLiveCount] = useState(142);
+  const [tickerItems, setTickerItems] = useState(TICKER_ITEMS);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
@@ -217,6 +210,17 @@ export default function Landing() {
       setLiveCount(prev => prev >= 160 ? prev : prev + 1);
     }, 4000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    base44.entities.TicketOpportunity.filter({ is_active: true }, "-opportunity_score", 12)
+      .then((items) => {
+        setTickerItems(items.map((item) => ({
+          match: item.match,
+          score: item.opportunity_score ?? 0,
+          discount: `${item.discount_pct ?? item.vs_highest_pct ?? 0}%`,
+        })));
+      });
   }, []);
 
   return (
@@ -262,7 +266,7 @@ export default function Landing() {
         </div>
         <div className="overflow-hidden flex-1">
           <div className="ticker-track">
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            {tickerItems.length > 0 ? [...tickerItems, ...tickerItems].map((item, i) => (
               <div key={i} className="flex items-center gap-4 px-6 shrink-0">
                 <span className="text-[11px] text-white/55 font-mono">{item.match}</span>
                 <span className="text-[11px] text-ghost-green font-mono font-medium">{item.discount} below market</span>
@@ -270,7 +274,13 @@ export default function Landing() {
                 <span className="text-[11px] text-white/30 font-mono">Score {item.score}</span>
                 <span className="text-white/10 mx-3 text-xs">|</span>
               </div>
-            ))}
+            )) : (
+              <div className="flex items-center gap-4 px-6 shrink-0">
+                <span className="text-[11px] text-white/35 font-mono">Waiting for live market data</span>
+                <span className="text-[11px] text-white/15">·</span>
+                <span className="text-[11px] text-white/25 font-mono">Scanner updates automatically</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
