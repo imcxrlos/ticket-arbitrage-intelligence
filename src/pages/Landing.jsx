@@ -220,7 +220,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#080808] text-white overflow-x-hidden touch-pan-y">
 
       {/* ── Nav ── */}
       <motion.nav
@@ -230,7 +230,7 @@ export default function Landing() {
         className="fixed top-0 left-0 right-0 z-50"
         style={{ background: "rgba(8,8,8,0.7)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-white pulse-dot" />
             <span className="font-display font-bold tracking-tight text-white text-[15px]">Ghost</span>
@@ -276,7 +276,7 @@ export default function Landing() {
       </div>
 
       {/* ── Hero ── */}
-      <section ref={heroRef} className="relative min-h-screen flex flex-col justify-center pt-32 pb-24 px-6 overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[88svh] lg:min-h-screen flex flex-col justify-center pt-28 pb-14 lg:pt-32 lg:pb-24 px-5 sm:px-6 overflow-hidden">
 
         {/* Ambient background */}
         <div className="absolute inset-0 pointer-events-none">
@@ -303,7 +303,7 @@ export default function Landing() {
               <motion.h1
                 {...fadeUp(0.18)}
                 className="font-display font-bold leading-[0.92] tracking-[-0.03em] text-white mb-7"
-                style={{ fontSize: "clamp(4.5rem,11vw,9rem)" }}
+                style={{ fontSize: "clamp(3.6rem,18vw,9rem)" }}
               >
                 Ghost
               </motion.h1>
@@ -345,7 +345,7 @@ export default function Landing() {
               </motion.div>
 
               {/* Stats */}
-              <motion.div {...fadeUp(0.52)} className="flex gap-10 mt-14 pt-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <motion.div {...fadeUp(0.52)} className="flex flex-wrap gap-6 sm:gap-10 mt-10 sm:mt-14 pt-7 sm:pt-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 {[
                   { label: "Opportunities Found", value: liveCount + "+" },
                   { label: "Avg. Discount", value: "31%" },
@@ -399,7 +399,7 @@ export default function Landing() {
       </section>
 
       {/* ── How It Works ── */}
-      <section className="py-32 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="py-20 sm:py-32 px-5 sm:px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUpView()} className="mb-20">
             <p className="text-[11px] text-white/25 font-mono tracking-[0.22em] uppercase mb-4">How Ghost Works</p>
@@ -432,7 +432,7 @@ export default function Landing() {
       </section>
 
       {/* ── Intelligence Stack (Features) ── */}
-      <section className="py-32 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="py-20 sm:py-32 px-5 sm:px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUpView()} className="mb-20">
             <p className="text-[11px] text-white/25 font-mono tracking-[0.22em] uppercase mb-4">Intelligence Stack</p>
@@ -465,7 +465,7 @@ export default function Landing() {
       </section>
 
       {/* ── Roadmap ── */}
-      <section className="py-32 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="py-20 sm:py-32 px-5 sm:px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUpView()} className="mb-20 text-center">
             <p className="text-[11px] text-white/25 font-mono tracking-[0.22em] uppercase mb-4">Roadmap</p>
@@ -491,7 +491,7 @@ export default function Landing() {
       <DonationsSection />
 
       {/* ── CTA ── */}
-      <section className="py-40 px-6 relative overflow-hidden" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="py-24 sm:py-40 px-5 sm:px-6 relative overflow-hidden" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full blur-[140px] opacity-[0.06]"
             style={{ background: "radial-gradient(ellipse, #ffffff 0%, transparent 70%)" }} />
