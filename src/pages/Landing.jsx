@@ -162,7 +162,7 @@ function RoadmapCard({ item, index }) {
           </motion.div>
           {item.highlight && (
             <a
-              href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump" target="_blank" rel="noopener noreferrer"
+              href="https://pump.fun/coin/BNSB1VTv6TnVbobhzvqN4REYtJ1h4xN1Z5zsEW7Hpump" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono transition-colors duration-200"
               style={{ color: "rgba(255,255,255,0.3)" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
@@ -306,7 +306,7 @@ export default function Landing() {
                 <div className="inline-flex items-center gap-2.5 mb-10 px-3.5 py-1.5 rounded-full"
                   style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
                   <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                  <span className="text-[10px] sm:text-[11px] text-white/60 font-mono tracking-wider uppercase break-all">CA: HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump</span>
+                  <span className="text-[10px] sm:text-[11px] text-white/60 font-mono tracking-wider uppercase break-all">CA: BNSB1VTv6TnVbobhzvqN4REYtJ1h4xN1Z5zsEW7Hpump</span>
                 </div>
               </motion.div>
 
@@ -335,7 +335,7 @@ export default function Landing() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                 </Link>
                 <a
-                  href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump"
+                  href="https://pump.fun/coin/BNSB1VTv6TnVbobhzvqN4REYtJ1h4xN1Z5zsEW7Hpump"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] transition-all duration-200 overflow-hidden"
