@@ -162,7 +162,7 @@ function RoadmapCard({ item, index }) {
           </motion.div>
           {item.highlight && (
             <a
-              href="https://pump.fun/coin/BNSB1VTv6TnVbobhzvqN4REYtJ1h4xN1Z5zsEW7Hpump" target="_blank" rel="noopener noreferrer"
+              href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono transition-colors duration-200"
               style={{ color: "rgba(255,255,255,0.3)" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
@@ -326,17 +326,24 @@ export default function Landing() {
                   Scan the Market
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                 </Link>
-                <div
-                  className="inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] cursor-default"
+                <a
+                  href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] transition-all duration-200 overflow-hidden"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "rgba(255,255,255,0.55)"
+                    background: "rgba(34,197,94,0.06)",
+                    border: "1px solid rgba(34,197,94,0.3)",
+                    boxShadow: "0 0 24px rgba(34,197,94,0.1)",
+                    color: "rgba(255,255,255,0.8)"
                   }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.35)" }} />
-                  <span>Coming Soon</span>
-                </div>
+                  <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
+                    style={{ background: "rgba(34,197,94,0.1)" }} />
+                  <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#22c55e" }} />
+                  <span className="relative">pump.fun</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-0.5 transition-transform duration-150" />
+                </a>
               </motion.div>
 
               {/* Stats */}
