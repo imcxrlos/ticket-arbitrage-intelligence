@@ -313,7 +313,7 @@ export default function Landing() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                <span className="text-[11px] font-mono uppercase tracking-[0.18em]">We're live on pump.fun</span>
+                <span className="text-[11px] font-mono uppercase tracking-[0.18em]">Live on pump.fun</span>
               </motion.div>
 
               <motion.h1
