@@ -302,14 +302,6 @@ export default function Landing() {
 
             {/* Left */}
             <div>
-              <motion.div {...fadeUp(0.1)}>
-                <div className="inline-flex items-center gap-2.5 mb-10 px-3.5 py-1.5 rounded-full"
-                  style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                  <span className="text-[10px] sm:text-[11px] text-white/60 font-mono tracking-wider uppercase break-all">CA: BNSB1VTv6TnVbobhzvqN4REYtJ1h4xN1Z5zsEW7Hpump</span>
-                </div>
-              </motion.div>
-
               <motion.h1
                 {...fadeUp(0.18)}
                 className="font-display font-bold leading-[0.92] tracking-[-0.03em] text-white mb-7"
