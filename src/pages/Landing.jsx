@@ -162,7 +162,7 @@ function RoadmapCard({ item, index }) {
           </motion.div>
           {item.highlight && (
             <a
-              href="https://pump.fun" target="_blank" rel="noopener noreferrer"
+              href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono transition-colors duration-200"
               style={{ color: "rgba(255,255,255,0.3)" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
@@ -306,7 +306,7 @@ export default function Landing() {
                 <div className="inline-flex items-center gap-2.5 mb-10 px-3.5 py-1.5 rounded-full"
                   style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
                   <div className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                  <span className="text-[11px] text-white/60 font-mono tracking-wider uppercase">FIFA World Cup 2026 — Active</span>
+                  <span className="text-[10px] sm:text-[11px] text-white/60 font-mono tracking-wider uppercase break-all">CA: HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump</span>
                 </div>
               </motion.div>
 
