@@ -335,7 +335,7 @@ export default function Landing() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                 </Link>
                 <a
-                  href="https://pump.fun"
+                  href="https://pump.fun/coin/HqVEYKnMQxCrD8DHZGEBGXGLqauMmNhXREnapVRUpump"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] transition-all duration-200 overflow-hidden"
