@@ -166,7 +166,7 @@ function RoadmapCard({ item, index }) {
               style={{ color: "rgba(255,255,255,0.3)" }}
             >
               <span className="w-1 h-1 rounded-full bg-ghost-green pulse-dot" />
-              pump.fun
+              Soon on pump.fun
             </div>
           )}
         </div>
@@ -309,7 +309,7 @@ export default function Landing() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-ghost-green pulse-dot" />
-                <span className="text-[11px] font-mono uppercase tracking-[0.18em]">Live on pump.fun</span>
+                <span className="text-[11px] font-mono uppercase tracking-[0.18em]">Soon on pump.fun</span>
               </motion.div>
 
               <motion.h1
@@ -346,7 +346,7 @@ export default function Landing() {
                   }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#22c55e" }} />
-                  <span>pump.fun</span>
+                  <span>Soon on pump.fun</span>
                 </div>
               </motion.div>
 
