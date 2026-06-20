@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight, ExternalLink } from "lucide-react";
+import { ArrowRight, Zap, Shield, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import DonationsSection from "@/components/DonationsSection";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -161,17 +161,13 @@ function RoadmapCard({ item, index }) {
             {item.desc}
           </motion.div>
           {item.highlight && (
-            <a
-              href="https://pump.fun/coin/Dchuo8bMNC8CG5KqNL46jDFdgkb6tyu7p7Lwaiqypump" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono transition-colors duration-200"
+            <div
+              className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono"
               style={{ color: "rgba(255,255,255,0.3)" }}
-              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
-              onClick={e => e.stopPropagation()}
             >
               <span className="w-1 h-1 rounded-full bg-ghost-green pulse-dot" />
-              pump.fun <ExternalLink className="w-2.5 h-2.5" />
-            </a>
+              pump.fun
+            </div>
           )}
         </div>
 
@@ -340,11 +336,8 @@ export default function Landing() {
                   Scan the Market
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                 </Link>
-                <a
-                  href="https://pump.fun/coin/Dchuo8bMNC8CG5KqNL46jDFdgkb6tyu7p7Lwaiqypump"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] transition-all duration-200 overflow-hidden"
+                <div
+                  className="relative inline-flex items-center justify-center gap-2.5 h-12 px-8 font-medium rounded-xl text-[14px] overflow-hidden"
                   style={{
                     background: "rgba(34,197,94,0.06)",
                     border: "1px solid rgba(34,197,94,0.3)",
@@ -352,12 +345,9 @@ export default function Landing() {
                     color: "rgba(255,255,255,0.8)"
                   }}
                 >
-                  <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
-                    style={{ background: "rgba(34,197,94,0.1)" }} />
                   <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#22c55e" }} />
-                  <span className="relative">pump.fun</span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-0.5 transition-transform duration-150" />
-                </a>
+                  <span>pump.fun</span>
+                </div>
               </motion.div>
 
               {/* Stats */}
